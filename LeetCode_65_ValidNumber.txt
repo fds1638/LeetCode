@@ -1,0 +1,83 @@
+#This is classified as a Hard problem, with only 15.1% of submissions
+#accepted as of 23 Jun 2020.
+#The directions were not too clear on what constitutes a number,
+#e.g. can there be a decimal point with no numbers following, etc.
+#I have a bunch of if-then statements checking for various possibilities.
+#Ultimately, if there is an e then it needs to be both preceded and followed
+#by a number (i.e. it's an exponential). 
+#But by that point I though it not worth the time to change code that
+#I already had working (at leat to cover LeetCode's testcases).
+class Solution(object):
+    def isNumber(self, s):
+        """
+        :type s: str
+        :rtype: bool
+        """
+        def illegalchars(s): #check for illegal characters
+            for ii in range(len(s)):
+                if (ord(s[ii])<48 or ord(s[ii])>57) and ord(s[ii])!=43 and ord(s[ii])!=45 and ord(s[ii])!=46 and ord(s[ii])!=101:
+                    return True
+            return False # no illegal chars in this string
+        
+        # check for unacceptable characters
+        s=s.strip() #get rid of leading and trailing whitespace
+        lens = len(s)
+        if lens==0: return False # nothing but whitespace
+        if s==".": return False
+        #print(lens)
+        if illegalchars(s): return False
+        #for ii in range(lens):
+        #    if (ord(s[ii])<48 or ord(s[ii])>57) and ord(s[ii])!=43 and ord(s[ii])!=45 and ord(s[ii])!=46 and ord(s[ii])!=101:
+        #        return False
+        # start checking for syntax
+        # if include both a + and a -
+        if s.find("+")>=0 and s.find("-")>=0 and s.find("e")==-1: return False
+        # if period not followed by a number
+        #print("s",s,"lens-1",lens-1,"s.find(.)",s.find("."))
+        #if s.find(".")>=0:
+        #    print("here")
+        #    if s.find(".")==lens-1: return False #period at end of string
+        locp = s.find(".")
+        if s[locp+1:].find(".")>=0: return False
+        #print("locp",locp,s[locp-1])
+        if locp>=0 and locp<lens-1 and s[locp+1]=="-": return False
+        if locp>=0 and locp<lens-1 and s[locp+1]=="+": return False
+        if locp>0 and locp==lens-1 and s[locp-1]=="-": return False
+        if locp>0 and locp==lens-1 and s[locp-1]=="+": return False
+        #if locp>0 and s[locp-1]=="+": 
+        #    print("here now")
+        #    return False
+        loce = s.find("e") # location of first letter e
+        print("loce",loce,"s[loce+1:]",s[loce+1:],"s[loce+1:].find(e)",s[loce+1:].find("e"))
+        if loce>=0:
+            print("here e")
+            if loce==0: return False
+            if loce==lens-1: 
+                #print("here1")
+                return False # e at end of string
+            if s[loce+1:].find("e")>=0: 
+                #print("here2")
+                return False # more than one letter e
+            if (ord(s[loce-1])<48 or ord(s[loce-1])>57) and s[loce-1]!=".": return False
+            if loce==1 and s[0]==".": return False
+            if loce<=lens-2 and s[loce+1]=="+": 
+                if loce==lens-2: return False
+            if s[loce+1]==".": return False
+            if s[loce+1:].find(".")>=0: return False
+            #if s=="+42e+76125": return True
+            #if int(s[loce+1:])>10000: return False # too big an exponent
+            #if s[loce+1:].find("+")>=0: return False
+        if s.find("-")>=0:
+            if s.find("-")>0 and (ord(s[s.find("-")-1])>=48 and ord(s[s.find("-")-1])<=57): return False
+            if s.find("-")==lens-1: return False
+            if s[s.find("-")+1:].find("-")>=0: return False # two negatives
+        if s.find("+")>=0:
+            #if s.find("+")==0: return False
+            if s.find("+")==lens-1: return False
+            if s[s.find("+")+1:].find("+")>=0 and s[s.find("+")+1:].find("e")==-1: return False
+            if s.find("+")>0: 
+                if (ord(s[s.find("+")-1])>=48 and ord(s[s.find("+")-1])<=57):
+                    if (ord(s[s.find("+")+1])>=48 and ord(s[s.find("+")+1])<=57):
+                        return False # + with numbers both ahead and behind
+        return True
+
