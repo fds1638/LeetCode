@@ -1,0 +1,133 @@
+#Another Hard problem, only 29.2% of submissions accepted.
+#The solution on LeetCode's site is very elegant.
+#Unfortunately, my solution is less elegant. 
+#But it works, according to LeetCodes testcases.
+class Solution(object):
+    def findMedianSortedArrays(self, nums1, nums2):
+        """
+        :type nums1: List[int]
+        :type nums2: List[int]
+        :rtype: float
+        """
+        len1=len(nums1)
+        len2=len(nums2)
+        if len2==0 and len1==1: return nums1[0]
+        if len1==0 and len2==1: return nums2[0]
+        if len1==1 and len2==1: return float(nums1[0]+nums2[0])/2.0
+        if len1!=0 and len1%2==0: #if even (and not zero)
+            med1=float(nums1[len1/2-1]+nums1[len1/2])/2
+            med1idx=len1/2-1
+        elif len1>0:              #if odd
+            med1=nums1[(len1-1)/2]
+            med1idx=(len1-1)/2
+        if len2!=0 and len2%2==0: #if even and not zero
+            med2=float(nums2[len2/2-1]+nums2[len2/2])/2
+            med2idx=len2/2-1
+        elif len2>0:              #if odd
+            med2=nums2[(len2-1)/2]
+            med2idx=(len2-1)/2
+        #print(med1,med2)
+        if len2==0: 
+            if len1==1: return nums1[0]
+            else: return med1
+        if len1==0: 
+            if len2==1: return nums2[0]
+            else: return med2
+        
+        def bs(n, arr, l, r):
+            #print(n,l,r)
+            if r<l: return -2
+            if r==l or arr[r]==arr[l]: 
+                if n<arr[l]: return -1
+                else: return l
+            if n<arr[l]:
+                return -1
+            elif arr[l]<=n and n<arr[r]:
+                m=(l+r)//2
+                if l+1==r or l==r:
+                    return l
+                else:
+                    if n<arr[m]:
+                        return bs(n, arr, l, m)
+                    else: #arr[m]<=n
+                        return bs(n, arr, m,r)
+            else: return r
+                
+
+        m1 = [-10] * len1
+        m2 = [-10] * len2
+        
+        lo1=0
+        hi1=len1-1
+        lo2=0
+        hi2=len2-1
+        
+        
+        def findval(s,lo1,hi1,lo2,hi2): #find the cumulative index s
+            #m1[2]=bs(nums1[2], nums2, 0, len2-1)+1+2
+            #m1[1]=bs(nums1[1], nums2, 0, len2-1)+1+1
+            print("s,lo1,hi1,lo2,hi2",s,lo1,hi1,lo2,hi2)
+            if len1==2 and len2==2:
+                twodubs=sorted([nums1[0],nums1[1],nums2[0],nums2[1]])
+                return twodubs[s]
+            m1[lo1]=bs(nums1[lo1], nums2, 0, len2-1)+1+0
+            print("A")
+            print(m1,m2)
+            if s==m1[lo1]: return nums1[lo1] 
+            if s<m1[lo1]: hi1=lo1
+            m1[hi1]=bs(nums1[hi1], nums2, 0, len2-1)+1+len1-1
+            print("B")
+            print(m1,m2)
+            if s==m1[hi1]: return nums1[hi1] 
+            if s>m1[hi1]: lo1=hi1
+            m2[lo2]=bs(nums2[lo2], nums1, 0, len1-1)+1+0
+            print("C")
+            print(m1,m2)
+            if s==m2[lo2]: return nums2[lo2] 
+            if s<m2[lo2]: hi2=lo2
+            m2[hi2]=bs(nums2[hi2], nums1, 0, len1-1)+1+len2-1
+            print("D")
+            print(m1,m2)
+            if s==m2[hi2]: return nums2[hi2] 
+            if s>m2[hi2]: lo2=hi2
+
+            me1=(lo1+hi1)//2
+            me2=(lo2+hi2)//2
+            print(s,lo1,hi1,lo2,hi2,me1,me2)
+        
+            while me1!=lo1 or me2!=lo2:
+                print(me1,me2)
+                m1[me1]=bs(nums1[me1], nums2, 0, len2-1)+1+me1
+                print("m1[me1]",m1[me1])
+                if s==m1[me1]: return nums1[me1] 
+                elif s<m1[me1]: hi1=me1
+                elif s>m1[me1]: lo1=me1
+                temp1=nums1[me1]
+                print("me2",me2)
+                print("bs me2",bs(nums2[me2], nums1, 0, len1-1))
+                m2[me2]=bs(nums2[me2], nums1, 0, len1-1)+1+me2
+                print(m2[me2])
+                if s==m2[me2]: return nums2[me2] 
+                elif s<m2[me2]: hi2=me2
+                elif s>m2[me2]: lo2=me2
+                temp2=nums2[me2]
+                me1=(lo1+hi1)//2
+                me2=(lo2+hi2)//2
+            if temp1>temp2: return temp1
+            else: return temp2
+        #end findval
+
+        if (len1+len2)%2!=0:   
+            s = (len1+len2-1)//2  #this is the index we are looking for
+            print("s",s)
+            return findval(s,lo1,hi1,lo2,hi2)
+        else:
+            s1 = (len1+len2-1)//2  #this is the index we are looking for
+            s2 = (len1+len2-1)//2+1  #this is the index we are looking for
+            print("s1s2",s1,s2)
+            temp1=findval(s1,lo1,hi1,lo2,hi2)
+            temp2=findval(s2,lo1,hi1,lo2,hi2)
+            print("temp1temp2",temp1,temp2)
+            return float(findval(s1,lo1,hi1,lo2,hi2)+findval(s2,lo1,hi1,lo2,hi2))/2
+        return -1
+
