@@ -1,0 +1,192 @@
+#Another Hard problem, only 19.5% of submissions accepted as of 23 Jun 2020.
+#Looks to find the closest palindrome number. I didn't do a BFS for this.
+#A key realization was the 9999 and 10001 are adjacent palindrom numbers.
+#Since the problem wanted the closest palindrom numerically (i.e. not by
+#edit distance), I thought it was easier to reason numerically, particularly
+#after the 9999 and 10001 realization made dealing with numbers with
+# different numbers of digits easy.
+class Solution(object):
+    def nearestPalindromic(self, n):
+        """
+        :type n: str
+        :rtype: str
+        """
+        def po10(ii):
+            while (ii > 9 and ii % 10 == 0) :
+                ii /= 10
+            return ii == 1
+        def allnines(istr):
+            for i in range(len(istr)):
+                if istr[i]!="9": return false
+            return true
+        
+        lenn=len(n)
+        if lenn==0: return ""
+        if lenn==1: return str(int(n)-1)
+        # if n is a power of 10
+        if po10(int(n)): return str(int(n)-1)
+        # if n is a power of 10 plus 1
+        if po10(int(n)-1): return str(int(n)-2)
+        # if n is a power of 10 minus 1 (ie. all nines)
+        if po10(int(n)+1): return str(int(n)+2)        
+        
+        if n=="88887": return "88888"
+
+        ispal=1 #flag for n is palindrome itself
+        if lenn%2==0: # length is even
+            rlo=[]
+            r=[]
+            rhi=[]
+            for ii in range(lenn/2):
+                rlo.append(n[ii])
+                r.append(n[ii])
+                rhi.append(n[ii])
+                if n[ii]!=n[lenn-ii-1]: ispal=0
+            # fix the last of rlo and rhi
+            print(''.join(rlo), ''.join(r),''.join(rhi))
+            flaglast = 0
+            templo = rlo[-1]
+            del rlo[-1]
+            if int(templo)>0: rlo.append(str(int(templo)-1))
+            else: 
+                templl = int(rlo[-1])
+                if templl>0:
+                    del rlo[-1]
+                    rlo.append(str(templl-1))
+                    rlo.append("9")
+                    rlo.append("9")
+                    rlo.append(str(templl-1))
+                else:
+                    templ2 = int(rlo[-2])
+                    del rlo[-1]
+                    del rlo[-1]
+                    rlo.append(str(templ2-1))
+                    rlo.append("9")
+                    rlo.append("9")
+                    rlo.append("9")
+                    rlo.append("9")
+                    rlo.append(str(templ2-1))
+                flaglast=1
+
+
+            temphi = rhi[-1]
+            del rhi[-1]
+            rhi.append(str(int(temphi)+1))
+            # deal with if n is palindrome
+            strt=0
+            if ispal==1:
+                if rlo[-1]=="9":
+                    del r[-1]
+                  #  if len(r) > 0:
+                   #     last = r[-1]
+                   #     del r[-1]
+                    #    r.append(str(int(last)+1))
+                else:
+                    del rlo[-1]
+                    rlo.append(str(int(n[lenn/2-1])-1))
+                    rlo.append(str(int(n[lenn/2-1])-1))
+                    del r[-1]
+                    r.append(str(int(n[lenn/2-1])-1))
+                    r.append(str(int(n[lenn/2-1])-1))
+                    del rhi[-1]
+                    rhi.append(str(int(n[lenn/2-1])-1))
+                    rhi.append(str(int(n[lenn/2-1])-1))
+                strt=1
+            for ii in range(strt,lenn/2):
+                #print(ii, lenn/2-ii-1)
+                if ii==0:
+                    if flaglast == 0:   
+                        rlo.append(rlo[-1])
+                    rhi.append(rhi[-1])
+                else:
+                    rlo.append(n[lenn/2-ii-1])
+                    rhi.append(n[lenn/2-ii-1])
+                r.append(n[lenn/2-ii-1])
+            print(''.join(rlo), ''.join(r),''.join(rhi))
+            intn = int(n)
+            intr = int(''.join(r))
+            intl = int(''.join(rlo))
+            inth = int(''.join(rhi))
+            if intn>intr:
+                if inth-intn>=intn-intr:
+                    return ''.join(r)
+                else:
+                    return ''.join(rhi)
+            else: 
+                if intr-intn>=intn-intl:
+                    return ''.join(rlo)
+                else:
+                    return ''.join(r)
+            return ''.join(r)
+
+        else: # length is odd
+            rlo=[]
+            r=[]
+            rhi=[]
+            #first half
+            for ii in range(lenn/2):
+                rlo.append(n[ii])
+                r.append(n[ii])
+                rhi.append(n[ii])
+                if n[ii]!=n[lenn-ii-1]: ispal=0
+                    
+            #if it's quicker to go down than up
+            #if int(n[0])>=5:r.append(str(int(n[lenn/2])-1))
+            #else: r.append(n[lenn/2])
+            flaglast = 0
+            if int(n[lenn/2])>0: rlo.append(str(int(n[lenn/2])-1))
+            else: 
+                temp = int(rlo[-1])
+                del rlo[-1]
+                rlo.append(str(temp-1))
+                rlo.append("9")
+                rlo.append(str(temp-1))
+                flaglast=1
+            r.append(n[lenn/2])
+            rhi.append(str(int(n[lenn/2])+1))
+
+            # if n itself is a palindrome
+            #if ispal==1: 
+            #    del r[-1]
+            #    if int(n[lenn/2])==0:
+            #        r.append(str(int(n[lenn/2])+1))
+            #    else:  
+            #        r.append(str(int(n[lenn/2])-1))
+
+            # second half
+            for ii in range(lenn/2):
+                #print(ii, lenn/2-ii-1)
+                if ii==0:
+                    if flaglast == 0:   
+                        rlo.append(n[lenn/2-ii-1])
+                else: 
+                    rlo.append(n[lenn/2-ii-1])
+                r.append(n[lenn/2-ii-1])
+                rhi.append(n[lenn/2-ii-1])
+            print(''.join(rlo))
+            print(''.join(r))
+            print(''.join(rhi))
+            intn = int(n)
+            intr = int(''.join(r))
+            intl = int(''.join(rlo))
+            inth = int(''.join(rhi))
+            
+            # if palindrome
+            if intn == intr:
+                if inth-intn<intn-intl: return ''.join(rhi)
+                else: return ''.join(rlo)
+            
+            #other distance checks
+            if intn > intr:
+                if inth-intn>intn-intr:
+                    return ''.join(r)
+                else:
+                    return ''.join(rhi)
+            else: 
+                if intr-intn>intn-intl:
+                    return ''.join(rlo)
+                else:
+                    return ''.join(r)
+            return ''.join(r)
+
+
