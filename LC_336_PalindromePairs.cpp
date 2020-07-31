@@ -9,7 +9,9 @@
 // going from O( n^2 * k ) to O( n * k^2 ) where n is the number of words
 // (on the order of 10,000) and k is the average length of a word (on the
 // order of 20). Previously, I had gotten something that worked, but that
-// couldn't finish in the time LeetCode demanded.
+// couldn't finish in the time LeetCode demanded. This still isn't too fast,
+// I could re-do many of the things I tried in order to make my code faster
+// when I was on the wrong track, but at this point I'll move on to a new problem.
 
 class Solution {
 public:
