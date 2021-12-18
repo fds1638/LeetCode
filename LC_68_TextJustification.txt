@@ -1,0 +1,62 @@
+class Solution {
+public:
+    vector<string> fullJustify(vector<string>& words, int maxWidth) {
+        vector<string> retval = {};
+        int wordindex = 0;
+        int lastword = -1;
+        while ( wordindex<words.size() ){
+            int firstword = lastword+1;
+            int linelength = 0;
+            string thisline = "";
+            int numwords = 0;
+            while ( wordindex<words.size()a && (linelength+words[wordindex].size()<maxWidth || (numwords==0 && linelength+words[wordindex].size()==maxWidth))) { 
+                //cout<<words[wordindex]<<endl;
+                numwords++;
+                if (numwords==1) linelength+=words[wordindex].size();  else linelength+=words[wordindex].size()+1; 
+                thisline.append(words[wordindex]);
+                thisline+=' '; // always add a space after the word
+                wordindex++; 
+            }
+            lastword = firstword + numwords -1 ;
+            //cout<<firstword<<" "<<lastword<<endl;
+            int wordbreaks = numwords-1;
+            // take away the last space
+            thisline = thisline.substr(0,thisline.size()-1);
+            //cout<<"xx"<<thisline<<"xx"<<endl;
+            int spacestoadd = maxWidth-thisline.size();
+            //int addtoeach = ;
+            //int plusones = ;
+            string myline = "";
+            // add extra spaces
+            // if last line, pad spaces
+            //cout<<"add "<<spacestoadd<<" in "<<wordbreaks<<" spaces. Breakdown: "<<addtoeach<<" "<<plusones<<endl;
+            if ( lastword<words.size()-1 ){
+                int extras = 0;
+                if ( lastword>firstword ){
+                    for (int ii=firstword; ii<=lastword; ii++) {
+                        myline.append(words[ii]);
+                        if ( ii<lastword ) {
+                            myline += ' ';
+                            for (int jj=0; jj<spacestoadd / wordbreaks; jj++) { myline+=' '; }
+                            if ( extras<spacestoadd % wordbreaks ) myline+=' ';
+                            extras++;    
+                        }
+                    }
+                } else { // only one word
+                    myline.append(words[firstword]);
+                    while ( myline.size()<maxWidth ) { myline+=' '; }
+                }
+            } else {
+                for (int ii=firstword; ii<=lastword; ii++) {
+                    myline.append(words[ii]);
+                    if ( ii<lastword ) { myline += ' '; }
+                }
+                //myline = myline.substr(0,myline.size()-1);
+                while ( myline.size()<maxWidth ) { myline+=' '; }
+            }
+            //cout<<myline<<endl;
+            retval.push_back(myline);
+        }
+        return retval;
+    }
+};
