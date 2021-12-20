@@ -1,0 +1,232 @@
+class Solution {
+public:
+    // speed: between 28 and 56 ms, ie 20th to 80th percentile
+    // memory: 16.5MB, 37th percentile
+    
+    // helper function to insert a new roof into the map roofs
+    // usually the new roof will be higher than the already-existing roofs in the map
+    // but not always
+    // if the new roof overlaps an existing old roof then the appropriate adjustments are made
+    // by deleting and/or reinserting roofs. The goal is that at all times the map roofs
+    // contains at most one roof above every point on the x-axis
+    void insertNewRoof(int newleft, int newright, int newheight, map<int, pair<int,int> >&roofs) {
+        //cout<<"ins "<<newleft<<" "<<newright<<" "<<newheight<<endl;
+        pair<map<int, pair<int,int> >::iterator,bool> rref;
+        rref = roofs.insert( {newleft, {newright, newheight} } );
+        // if there was one already there then replace it
+        if ( !rref.second ){ 
+            //rref.first->second = {newright ,newheight}; 
+            if ( newheight>rref.first->second.second){ // if higher than existing roof
+                if ( newright>=rref.first->second.first ) { // if existing doesn't extend as far just replace
+                    rref.first->second = {newright ,newheight};
+                    //cout<<"in1 "<<rref.first->first <<" "<< rref.first->second.first << " "<<rref.first->second.second<<endl;
+                } else { // if existing extends farther
+                    int repleft = rref.first->first;
+                    int reprite = rref.first->second.first;
+                    int rephite = rref.first->second.second;
+                    rref.first->second = {newright, newheight};
+                    //cout<<"in2 "<<rref.first->first <<" "<< newright << " "<<newheight<<endl;
+                    insertNewRoof(newright, reprite, rephite, roofs);
+                }
+            } else if ( newheight==rref.first->second.second) { // if equal heights
+                // choose longer one
+                rref.first->second = {max(newright,rref.first->second.first),newheight};
+            } else { // if lower roof
+                // insert only if extends further
+                if ( newright > rref.first->second.first ) {
+                    insertNewRoof(rref.first->second.first, newright, newheight, roofs);
+                }
+            }
+        } else { // no conflict, just inserted
+            //cout<<"in3 "<<newleft <<" "<< newright << " "<<newheight<<endl;
+        }
+
+    }
+    
+    
+    vector<vector<int>> getSkyline(vector<vector<int>>& buildings) {
+        // Conceptually divided into three phases
+        // Phase One: put the buildings into a map of heights, where each height holds a vector
+        // with the left and right edges of the buildings of that height.
+        // Phase Two: going over the map heights from lowest to hightest, place the buildings
+        // in the map roofs. Since later entries will be higher than already existing ones,
+        // they can eliminate duplicate roofs over the same x-value. Each new roof will be
+        // inserted with its leftmost endpoint as a key and will elimiate any roofs below it
+        // and to the right, up to its right endpoint. 
+        // Phase Three: Now we can go along the map roofs from left to right and calculate the
+        // return value vector we want. Because of how Phase Two worked, we know that when we
+        // see the left end of a building there will be no building with a corner to the left.
+        // A stack is kept to take care of the cases where a low wide building starts to the
+        // left of and extends to the right of taller buildings. 
+        
+        // Phase One
+        map<int,vector<pair <int,int>>> heights; // key = height, value = { begin, end }
+        for (int bb=0; bb<buildings.size(); bb++){
+            heights[ buildings[bb][2] ].push_back({buildings[bb][0],buildings[bb][1]});
+            //cout<<buildings[bb][2] <<" "<<buildings[bb][0] <<" "<< buildings[bb][1] <<" "<< heights[ buildings[bb][2] ].size()<<endl;
+        }
+        //cout<<endl;
+        //cout<<endl;
+        
+        // Phase Two
+        map<int,vector<pair <int,int>>>::iterator hit; // iterate heights from low to high
+        map<int, pair<int,int> > roofs; // key = left end, value = { right end, height }
+        for(hit=heights.begin(); hit!=heights.end(); hit++){
+            // insert new roof based on begin
+            // since you know it's at least as high as all existing roofs, can override existing roof at that spot
+            for (int hh=0; hh<hit->second.size(); hh++){
+            //cout<<"HIT "<<hit->second[hh].first<<" "<<hit->second[hh].second<<" "<<hit->first<<endl;
+            pair<map<int, pair<int,int> >::iterator,bool> ret;
+            ret = roofs.insert( {hit->second[hh].first, {hit->second[hh].second,hit->first} } );
+            if ( !ret.second ) { // if an element is already there
+                // new roof at least as high as old roof
+                // if new roof as long or longer than old roof, replace it
+                // if new roof shorter than old roof then reinsert new old roof
+                if ( hit->second[hh].second >= ret.first->second.first ) {
+                    ret.first->second = {hit->second[hh].second,hit->first};
+                } else {
+                    int newleft  = hit->second[hh].second;
+                    int newright = ret.first->second.first;
+                    int newheight= ret.first->second.second;
+                    ret.first->second = {hit->second[hh].second,hit->first};
+                    // reinsert if already existing one isn't higher
+                    insertNewRoof(newleft, newright, newheight, roofs);
+                }
+            } 
+
+            // see how far the newly entered roof stretches and eliminate all roofs that fall under it
+            // if the new roof partially covers an existing roof, re-insert a new existing roof for the overhang
+            int curroofend = hit->second[hh].second;
+            map<int, pair<int,int> >::iterator rit; 
+            rit = ret.first;
+            bool foundedge = false;
+            rit++;
+            while ( !foundedge && rit!=roofs.end() ){
+                // set up next step for iterator
+                map<int, pair<int,int> >::iterator nextrit; 
+                nextrit = rit;
+                nextrit++; 
+                cout<<"rit "<<rit->first<<" "<<rit->second.first<<" "<<rit->second.second<<endl;
+                if ( rit->first>curroofend ) { foundedge=true; } // cur roof not even reach to next roof begin
+                else if ( rit->second.first<=curroofend ) { // cur roof covers whole of next roof
+                    // delete next roof
+                    roofs.erase(rit);
+                } else { // cur roof covers only part of next roof
+                    cout<<" here "<<endl;
+                    //foundedge = true;
+                    // save data of new next roof
+                    int newleft = curroofend;
+                    int newright = rit->second.first;
+                    int newheight = rit->second.second;
+                    // delete next roof
+                    roofs.erase(rit);
+                    // insert new roof
+                    cout<<"put "<<newleft<<" "<<newright<<" "<<newheight<<endl;
+                    insertNewRoof(newleft, newright, newheight, roofs);
+                    
+                }
+                rit = nextrit;
+            }
+            // if end of underlying is hanging out, re-place end
+            }
+        }
+        cout<<endl;
+        cout<<endl;
+        
+        
+        
+        // Print out for debugging
+        map<int, pair<int,int> >::iterator rit; 
+        /*
+        for (rit=roofs.begin(); rit!=roofs.end(); rit++) {
+        //    cout<<"roof "<<rit->first<<" "<<rit->second.first<<" "<<rit->second.second<<endl;
+        }
+        cout<<endl;
+        cout<<endl;
+        */
+        
+        // Phase Three
+        stack<pair<int,int>> ends;
+        vector<vector<int>> retval;
+        int rightofprev = 0; // right end of previous roof
+        for (rit=roofs.begin(); rit!=roofs.end(); rit++) {
+            //cout<<"roof "<<rit->first<<" "<<rit->second.first<<" "<<rit->second.second<<endl;
+            //cout<<"ends size "<<ends.size()<<endl;
+            // work through the stack of possible "underhangs"
+            // get rid of all ends whose right end is left of where we are now
+            while ( !ends.empty() && ends.top().first<=rightofprev ) { ends.pop(); }
+            // rightofprev is right edge of previous roof
+            // leftofnext is left edge of next roof
+            int leftofnext = rit->first;
+            if ( rightofprev>1400 ){
+            if ( ends.empty() ) {
+            //    cout<<"rightofprev "<<rightofprev<<" leftofnext "<<leftofnext<<endl;
+            } else {
+            //    cout<<"rightofprev "<<rightofprev<<" leftofnext "<<leftofnext<<" endstop "<<ends.top().first<<" "<<ends.top().second<<endl;
+            }
+            }
+            while ( !ends.empty() && ends.top().first<=leftofnext && ends.top().first>rightofprev ) {
+                retval.push_back({rightofprev,ends.top().second});
+                rightofprev = ends.top().first;
+                ends.pop();
+            }
+            //cout<<"rightofprev "<<rightofprev<<" leftofnext "<<leftofnext<<endl;
+            if ( !ends.empty()&& ends.top().first>=leftofnext && rightofprev<leftofnext ) { retval.push_back({rightofprev,ends.top().second}); } 
+            else if (rightofprev>0 && rightofprev<leftofnext) {retval.push_back({rightofprev,0});}
+                
+            map<int, pair<int,int> >::iterator nextrit; 
+            nextrit = rit;
+            nextrit++; 
+            //cout<< rit->first<<" "<<rit->second.first<<" "<<rit->second.second<<endl;
+            // if next begins before this one ends, go to next
+            if ( nextrit->first <= rit->second.first ) {
+                // what if roofs have the same height?
+                // if this isn't the first roof, check backwards
+                if ( rit==roofs.begin() ) { // if I'm the first roof go ahead and insert
+                    //cout<<"pus1 "<< rit->first << " " << rit->second.second<<endl;
+                    retval.push_back({rit->first,rit->second.second});
+                    ends.push({rit->second.first,rit->second.second}); //new 
+                    //cout<<"ends szze "<<ends.size()<<endl;
+                } else { // not the first, check backwards
+                    int lastroofheight = retval[retval.size()-1][1];
+                    if ( lastroofheight!=rit->second.second ) {
+                        //cout<<"pus2 "<< rit->first << " " << rit->second.second<<endl;
+                        retval.push_back({rit->first,rit->second.second});
+                        ends.push({rit->second.first,rit->second.second}); //new 
+                        //cout<<"ends szze "<<ends.size()<<endl;
+                    } 
+                }
+                if (nextrit!=roofs.end()) rightofprev = nextrit->first;
+            } else { // if next begins after this one ends
+                //cout<<"pus3 "<< rit->first << " " << rit->second.second<<endl;
+                retval.push_back({rit->first,rit->second.second});
+                ends.push({rit->second.first,rit->second.second}); //new coming right off
+                //retval.push_back({rit->second.first,0});
+                rightofprev = rit->second.first;
+            }
+
+            //cout<<"rightofprev "<<rightofprev<<" leftofnext "<<leftofnext<<endl;
+            // at the very end put a zero
+            if ( nextrit==roofs.end() ){
+                //retval.push_back({rit->second.first,0});
+                rightofprev = rit->second.first;
+            }
+            
+        }
+        // unwind anything left in the stack
+        //ends.pop(); // get rid of the last one
+        if ( !ends.empty() && ends.top().first==rightofprev ) ends.pop();
+        //cout<<"rightofprev "<<rightofprev<<" ends.size "<<ends.size()<<" ends.top().first "<<ends.top().first<< endl;
+        while ( !ends.empty()  && ends.top().first>rightofprev ) {
+            retval.push_back({rightofprev,ends.top().second});
+            rightofprev = ends.top().first;
+            ends.pop();
+        }
+
+        // ending zero
+        retval.push_back({rightofprev,0});
+        
+        
+        return retval;
+    }
+};
