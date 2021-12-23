@@ -1,0 +1,38 @@
+class Solution {
+public:
+    int trap(vector<int>& height) {
+        // running time = 8ms, in the 78th percentile
+        // memory usage = 16.2MB, in the 15th percentile
+        // The idea is that any time you have a depression, it will fill with water.
+        // The height of the water will be the lower of the two peaks on either
+        // side of the depression.
+        // So the method is to make three passes throught the array.
+        // First, for each elevation column find the highest column to its left.
+        // Second, for each elevation column find the highest column to its right.
+        // Third, the water column above each elevation columns will be the min of the
+        // max to its left and to its right. Add these water column heights up.
+        int vsize = height.size();
+        vector<int> maxleft(vsize,0);
+        vector<int> maxright(vsize,0);
+        vector<int> waterheight(vsize,0);
+        
+        int lmax = 0;
+        for(int ii=1;ii<vsize;ii++){ 
+            lmax = max(lmax,height[ii-1]);
+            maxleft[ii]=lmax;
+        }
+        
+        int rmax = 0;
+        for(int ii=vsize-2;ii>=0;ii--){ 
+            rmax = max(rmax,height[ii+1]);
+            maxright[ii]=rmax;
+        }
+        
+        int retval = 0;
+        for (int ii=0;ii<vsize;ii++){
+            int curcolumn = min(maxleft[ii],maxright[ii])-height[ii];
+            retval += max(0,curcolumn);
+        }
+        return retval;
+    }
+};
