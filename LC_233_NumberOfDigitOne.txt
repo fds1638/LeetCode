@@ -1,0 +1,36 @@
+class Solution {
+public:
+    int countDigitOne(int n) {
+        // runtime 0ms, in 100th percentile
+        // memory usage 6.2MB, in 17th percentile (median is about 5.9MB)
+        if (n==0) return 0; 
+        int digs = floor(log10(n))+1; // number of digits in n
+        int dd = digs-1;
+        int p10 = pow(10,dd); // get the largest power of ten less than n
+        int curdig = n / p10; // get the current first digit
+        int nextn = n%p10;    // get n with the first digit removed
+        int retval = 0;       // the return value
+        // Case when the current first digit is two or greater: let us pretend the 
+        // number is 3xxxxx. Then the number of ones in this is:
+        // All the ones in the numbers up to 300000 plus
+        // all the ones in the number xxxxx.
+        // The latter, ie the number of ones in xxxxx, is the recursive part of the 
+        // formula below, ie the countDigitOne(n%p10) term.
+        // Figuring out the number of ones in the numbers up to 300000 is by formula:
+        // first term: all the ones in the numbers up to 99999, ie dd*pow(10,dd-1), multiplied by 3, ie curdig
+        // second term: plus all the leading ones in the numbers 100000, 1000001, ..., 199999, ie pow(10,dd)
+        if ( curdig>= 2) {
+            retval = dd*pow(10,dd-1)*curdig+pow(10,dd)+countDigitOne(n%p10);
+        } else if ( curdig==1 ) {
+            // A similar calculation to the case for curdig>=2, except that if the number is 1xxxxx we 
+            // only have to calc the number of ones up to 99999 (first term, dd*pow(10,dd-1) ),
+            // plus 1 for the 1 in 100000 (second term, 1)
+            // plus 1 for the leading one in each number greater than 100000 (third term, n%p10 ie xxxxx)
+            // plus the ones in xxxxx (fourth term, countDigitOne(n%p10) )
+            retval = dd*pow(10,dd-1)+ 1  + n%p10 + countDigitOne(n%p10);
+        } else {
+            // this possibility wasn't needed :) 
+        }
+        return retval;
+    }
+};
