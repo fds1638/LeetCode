@@ -1,0 +1,59 @@
+class Solution {
+public:
+    vector<int> fallingSquares(vector<vector<int>>& positions) {
+        // running time: 44ms, in 51st percentile
+        // memory usage: 14.4MB, in 21st percentile
+        // Phase One: get a set of all the right and left endpoints of the squares
+        // Phase Two: now that we know how many intervals we have create a map which takes
+        // an endpoint of a square and maps it to the vector of interval maxima.
+        // Phase Three: go through the list of positions, ie squares, and as each drops
+        // find the old max on its interval and thus the new max on its interval, then
+        // check if it is a global max and append the global max to the return value retval.
+        
+        // Phase One
+        set<int> endpoints;
+        for (int ii=0; ii<positions.size(); ii++){
+            endpoints.insert(positions[ii][0]);
+            endpoints.insert(positions[ii][0]+positions[ii][1]);
+        }
+        
+        // Phase Two
+        set<int>::iterator eit;
+        vector<int> intmaxes(endpoints.size()-1,0); // don't need interval going to infinity
+        map<int,int> intervals;
+        int intcount = 0;
+        for (eit=endpoints.begin(); eit!=endpoints.end(); eit++){
+            intervals[*eit]=intcount;
+            intcount++;
+        }
+        intcount--;
+        
+        // Phase Three
+        vector<int> retval;
+        int overallmax = 0;
+        for (int pp=0; pp<positions.size(); pp++){
+            //intervalmax = 0;
+            //map<int,int>::iterator loit;
+            //map<int,int>::iterator hiit;
+            //pair<map<int,int>::iterator, bool> loret;
+            //pair<map<int,int>::iterator, bool> hiret;
+            int loidx;
+            int hiidx;
+            int height;
+            loidx = positions[pp][0];
+            height = positions[pp][1];
+            hiidx = loidx+height;
+            // get maxes
+            //cout<<height<<endl;
+            int previntervalmax = 0;
+            for (int ii=intervals[loidx]; ii<intervals[hiidx]; ii++) { previntervalmax = max(previntervalmax,intmaxes[ii]);}
+            int newintervalmax = previntervalmax + height;
+            for (int ii=intervals[loidx]; ii<intervals[hiidx]; ii++) { intmaxes[ii]=newintervalmax;}
+            overallmax = max(overallmax,newintervalmax);
+            retval.push_back(overallmax);
+        }
+        
+        
+        return retval;
+    }
+};
