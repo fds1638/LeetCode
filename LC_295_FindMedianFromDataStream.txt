@@ -1,0 +1,63 @@
+class MedianFinder {
+public:
+    /** initialize your data structure here. */
+    // runtime: 300ms, 65th percentile
+    // memory usage: 117.2MB, 20th percentile
+    priority_queue <int, vector<int>, greater<int>> upper;  
+    std::priority_queue<int> lower;
+    MedianFinder() {
+        // Initialize by putting in values so that no error comes in
+        // when calling top().
+        upper.push(INT_MAX);
+        lower.push(INT_MIN);
+    }
+    
+    void addNum(int num) {
+        // We have two priority queues.
+        // upper is upper half of values seen so far, with top() yielding min.
+        // lower is lower half of values seen so far, with top() yielding max.
+        // Put new value in appropriate priority queue, and if needed move
+        // a value from one priority queue to another to make sure at most
+        // a difference in size of one (if have seen an odd number of numbers
+        // so far).
+        if (upper.size()>=lower.size()){
+            if ( num>upper.top()){
+                upper.push(num);
+                lower.push(upper.top());
+                upper.pop();
+            } else {
+                lower.push(num);
+            } 
+            
+        } else if ( upper.size()==lower.size()){
+            if (num>lower.top()) upper.push(num);
+            else lower.push(num);
+        } else if ( upper.size()<lower.size()){
+            if ( num>lower.top()) {
+                upper.push(num);
+            } else {
+                lower.push(num);
+                upper.push(lower.top());
+                lower.pop();
+            }
+        }
+    }
+    
+    double findMedian() {
+        // If you have an even number, return average.
+        // If you have an odd number, return the top() of the priority queue
+        // that has more values stored in it.
+        double retval = 0.0;
+        if ( upper.size()==lower.size()) retval = 0.5*upper.top()+0.5*lower.top();
+        else if ( upper.size()>lower.size()) retval = 1.0*upper.top();
+        else retval = 1.0*lower.top();
+        return retval;
+    }
+};
+
+/**
+ * Your MedianFinder object will be instantiated and called as such:
+ * MedianFinder* obj = new MedianFinder();
+ * obj->addNum(num);
+ * double param_2 = obj->findMedian();
+ */
