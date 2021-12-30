@@ -1,0 +1,95 @@
+class Solution {
+private:
+    void insertNewNum(int nn, priority_queue<int,vector<int>,greater<int>>&upper, priority_queue<int>&lower){
+        // This is for the first k numbers.
+        // Put a new number in the upper priority queue, then rebalance the queues if necessary.
+        upper.push(nn);
+        if (upper.size()>lower.size()+1) {
+            lower.push(upper.top());
+            upper.pop();
+        } else {
+            if (lower.size()>0 && upper.top()<lower.top()){
+                int temp = lower.top();
+                lower.pop();
+                lower.push(upper.top());
+                upper.pop();
+                upper.push(temp);
+            }
+        }
+    }
+    
+    void insertDelete(int nn,priority_queue<int,vector<int>,greater<int>>&upper,priority_queue<int>&lower,int k,map<int,int>& delmap, int todelete){
+        // Now the queues will have a bunch of obsolete numbers in them, but those don't matter unless
+        // they're on top. So we really need to keep track of how many "current" numbers are in the upper
+        // and how many in the lower queue.
+        
+        // loneed and upneed tell us how many numbers we need in each queue
+        // Then we use todelete to tell us whether the latest number that we are deleting
+        // should be from the upper or lower queue. This tells us in which queueu to put the
+        // new number and how to rebalance.
+        int loneed = k/2;
+        int upneed = k%2==0?k/2:k/2+1;
+        int locount = loneed, upcount = upneed;
+        if ( todelete>=upper.top()) upcount--;
+        else if (todelete<=lower.top()) locount--;
+        
+        // Put in the new number and rebalance.
+        if ( upcount<upneed ){
+            if (nn>=lower.top()){
+                upper.push(nn);
+            } else {
+                lower.push(nn);
+                upper.push(lower.top());
+                lower.pop();
+            }
+        } else if ( locount<loneed ) {
+            if (nn<=upper.top()){
+                lower.push(nn);
+            } else {
+                upper.push(nn);
+                lower.push(upper.top());
+                upper.pop();
+            }
+        }
+        
+        // If we now have a deleted number on top of one of the queues, delete until
+        // each queue is topped by a number in the current window.
+        while ( delmap[upper.top()]>0 ) { delmap[upper.top()]--; upper.pop(); }
+        while ( delmap[lower.top()]>0 ) { delmap[lower.top()]--; lower.pop(); }
+    }
+public:
+    vector<double> medianSlidingWindow(vector<int>& nums, int k) {
+        // runtime: 52ms, 52nd percentile
+        // memory usage: 14.8MB, 85th percentile
+        // Phase One: go through first k numbers and calculate first median using two priority queues
+        // Phase Two: now we start dropping numbers. The only thing we really care about is (1) that of the
+        // numbers that are currently in the window, correct numbers of them are in the upper 
+        // priority queue and in the lower priority queue, and (2) that the top() numbers in each queue
+        // are correct since those are the numbers needed to compute the median.
+        
+        vector<double> retval; // return value
+        // If k is one, we can solve the problem straightforwardly.
+        if (k==1) { for(int ii=0; ii<nums.size(); ii++){ retval.push_back(1.0*nums[ii]);} return retval;}
+
+        // Phase One
+        // Set up two priority queues, put in the first k numbers, and calc first element of answer.
+        priority_queue <int, vector<int>, greater<int>> upper;  
+        priority_queue<int> lower;
+        for (int ii=0; ii<k; ii++){
+            insertNewNum(nums[ii],upper,lower);
+        }
+        if (k%2==1) retval.push_back(1.0*upper.top()); else retval.push_back(0.5*upper.top()+0.5*lower.top());
+        
+        // Phase Two
+        map<int,int> delmap; // these are all the numbers that need to be deleted
+        // Go through remaining numbers
+        for (int ii=k; ii<nums.size(); ii++){
+            delmap[nums[ii-k]]++;      // all numbers that still need to be deleted
+            int todelete = nums[ii-k]; // latest number to delete
+            insertDelete(nums[ii], upper, lower, k, delmap, todelete);
+            if (k%2==1) retval.push_back(1.0*upper.top()); else retval.push_back(0.5*upper.top()+0.5*lower.top());
+        }
+
+        return retval;
+    }
+};
