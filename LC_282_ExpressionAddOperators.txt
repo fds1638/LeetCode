@@ -1,0 +1,110 @@
+class Solution {
+private:
+    
+    void createExpressions(pair<int,int> sofar, string&num, int idx, int target, vector<string>&retval, string curterm, string curstring){
+        if ( idx<num.size() ){
+            // Four possibilities before the next number in the string:
+            // * or + or - or nothing (ie continue the current number)
+            vector<string> ops = {"*","+","-",""};
+            for (int oo=0; oo<ops.size(); oo++){
+                string curtermnext = curterm;
+                string curstringnext = curstring;
+                pair<int,int> nextfar = sofar;
+                
+                if ( oo<=2 ) { // I'm going to start with a new number
+                    if ( curterm[0]=='+' ) { // we can add the two terms in sofar/nextfar
+                        int curnum = stoi(curterm.substr(1)); 
+                        nextfar.first += nextfar.second;
+                        nextfar.second = curnum;
+                    } else if ( curterm[0]=='-'){ // we can add the two terms in sofar/nextfar
+                        int curnum = stoi(curterm.substr(1)); 
+                        nextfar.first += nextfar.second;
+                        nextfar.second = -1*curnum;
+                    } else if ( curterm[0]=='*'){ // must multiply nextfar.second
+                        int curnum = stoi(curterm.substr(1)); // curnum is always >= 0
+                        if ( curnum==0 || nextfar.second==0 ) nextfar.second *= curnum;
+                        else if ( nextfar.second>0 && INT_MAX/curnum >= nextfar.second )  nextfar.second *= curnum;
+                        else if ( nextfar.second<0 && INT_MAX/curnum >= -1*nextfar.second )  nextfar.second *= curnum;
+                        else return; // overflow
+                        
+                    } else { // I'm still on the first term, no operators yet
+                        int curnum;
+                        if (curterm.size()<10 || curterm.compare("2147483647")<=0) curnum = stoi(curterm); 
+                        else return; // overflow
+                        nextfar.second = curnum;
+                    }
+                    curtermnext = ops[oo]; // start the string for a new curterm, concat operator
+                    curstringnext+=ops[oo]; // concat operator
+                    curtermnext.append(num.substr(idx,1)); // concat next number
+                    curstringnext.append(num.substr(idx,1)); // concat next number
+                } else { // continuing with the old number
+                    // check to see that I'm not starting a number with a leading zero
+                    if ( 
+                        !(curtermnext[0]=='0' && curtermnext.size()==1) &&
+                        !((curtermnext[0]=='+'||curtermnext[0]=='-'||curtermnext[0]=='*') && curtermnext.size()==2 && curtermnext[1]=='0')
+                    ){
+                        curtermnext.append(num.substr(idx,1));
+                        curstringnext.append(num.substr(idx,1));
+                    } else {
+                        return; // can't set a leading zero, no need to keep recursing
+                    }
+                }
+                createExpressions( nextfar, num, idx+1, target, retval, curtermnext, curstringnext);
+            }
+        } else { // finished last number in num, check to see if it is a solution
+            // This is the same as the above, just doing the calculation at the end once
+            // we have added the final number. At this point just add sofar.first and sofar.second
+            // and see if it hits the target. Used nextfar just as a copy-and-paste convenience.
+                    pair<int,int> nextfar = sofar;
+                    if ( curterm[0]=='+' ) {
+                        int curnum = stoi(curterm.substr(1)); 
+                        nextfar.first += nextfar.second;
+                        nextfar.second = curnum;
+                    } else if ( curterm[0]=='-'){
+                        int curnum = stoi(curterm.substr(1));
+                        nextfar.first += nextfar.second;
+                        nextfar.second = -1*curnum;
+                    } else if ( curterm[0]=='*'){
+                        int curnum = stoi(curterm.substr(1)); // curnum is always >= 0
+                        if ( curnum==0 || nextfar.second==0 ) nextfar.second *= curnum;
+                        else if ( nextfar.second>0 && INT_MAX/curnum >= nextfar.second )  nextfar.second *= curnum;
+                        else if ( nextfar.second<0 && INT_MAX/curnum >= -1*nextfar.second )  nextfar.second *= curnum;
+                        else return;
+                    } else { // I'm on the first term
+                        int curnum;
+                        if (curterm.size()<10 || curterm.compare("2147483647")<=0) curnum = stoi(curterm); 
+                        else return;
+                        nextfar.second = curnum;
+                    }
+            // If this is the target, append it to the return value. 
+            if ( nextfar.first + nextfar.second == target ) retval.push_back(curstring);
+        }
+        return;
+    }
+public:
+    vector<string> addOperators(string num, int target) {
+        // runtime 880ms, 5th percentile
+        // memory usage: 212.1MB, 5th percentile
+        // This was a tough one, tough for me to make it fast enough.
+        
+        // If the target is INT_MIN, it is impossible to get there with a string of 10 numbers.
+        // There is no unary minus sign, so the smallest number you can get to is
+        // 9-999999999, which isn't small enough.
+        if (target == INT_MIN) return {};
+        
+        // sofar will keep the values of the last two terms
+        // curterm is the current term (including + or - or *)
+        // curstring will hold the answers we put in a vector as a return value
+        // When curterm is done (because of another + or - or *)
+        // then sofar will be updated. The idea of keeping two terms in
+        // sofar is that we know we can go ahead and do an addition/subtraction
+        // once we see another + or - come along. If we get * we mulitply it by
+        // sofar.second in order to satisfy PEMDAS.
+        pair<int,int> sofar = {0,0};
+        string curterm = num.substr(0,1); // no leading - so start with first number
+        string curstring = num.substr(0,1);
+        vector<string> retval;
+        createExpressions(sofar, num, 1, target, retval, curterm, curstring);
+        return retval;
+    }
+};
