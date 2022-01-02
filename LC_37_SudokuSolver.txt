@@ -1,0 +1,115 @@
+class Solution {
+public:
+    int rowRC(int r, int c) { return r; }
+    int colRC(int r, int c) { return c; }
+    int square(int r, int c) { 
+        if      ( r<=2 ) {if(c<=2){return 0;}else if(c<=5){return 1;}else if(c<=8){return 2;}}
+        else if ( r<=5 ) {if(c<=2){return 3;}else if(c<=5){return 4;}else if(c<=8){return 5;}}
+        else if ( r<=8 ) {if(c<=2){return 6;}else if(c<=5){return 7;}else if(c<=8){return 8;}}
+        return -1;
+    }
+    
+
+    
+    void solveSudoku(vector<vector<char>>& board) {
+        // runtime: 102ms, which is 11th percentile
+        // memory usage: 16.7MB, which is 13th percentile
+        // Strategy: Depth First Search
+        
+        // For each of 9 rows, note which of the nine numbers have been used.
+        // Same for the 9 columns and 9 squares.
+        vector< vector<bool>  > rows(9,vector<bool>(9,false) );
+        vector< vector<bool>  > cols(9,vector<bool>(9,false) );
+        vector< vector<bool>  > sqrs(9,vector<bool>(9,false) );
+        
+        // When have filled 81 numbers, you know you're done.
+        int numstofill = 81;
+        
+        // Take the given board and note the numbers that have already been
+        // entered into the rows, cols, sqrs.
+        for (int rr=0;rr<9;rr++){
+            for (int cc=0;cc<9;cc++) {
+                char curboard = board[rr][cc];
+                if ( curboard!='.' ) { 
+                    int num = board[rr][cc]-'0';
+                    rows[rr][num-1]=true; 
+                    cols[cc][num-1]=true; 
+                    sqrs[square(rr,cc)][num-1]=true;
+                    numstofill--;
+                }
+            }
+        }
+        
+        // Find the first period, assume it is in the first row. 
+        // This is the starting point.
+        int curcol = 0;
+        while ( board[0][curcol]!='.' ) { curcol++; }
+        int curnumidx = 0;
+        while ( rows[0][curnumidx] || cols[curcol][curnumidx] || sqrs[square(0,curcol)][curnumidx] ) { curnumidx++; }
+
+        // Set up the variables for the DFS. 
+        stack<vector<int>> dfs;
+        dfs.push({0,curcol,curnumidx,0,curcol});
+        rows[0][curnumidx]=true;
+        cols[curcol][curnumidx]=true;
+        sqrs[square(0,curcol)][curnumidx]=true;
+        board[0][curcol]=curnumidx+1+'0';
+        int numsfilled = 1;
+
+        // Do the DFS.
+        // This could be made more efficient -- and I have essentially the same code in two places.
+        while ( !dfs.empty() ) {
+            vector<int> curvec = dfs.top();
+            // if can place next dot
+            if ( curvec[3]==curvec[0] && curvec[4]==curvec[1] ) { // if just placed here then go to next
+                // find the next dot
+                int curint = 9*curvec[0]+curvec[1]+1;
+                while ( curint<81 && board[curint/9][curint%9]!='.' ) { curint++; }
+                if ( curint==81 ) return; // done!
+                int nextr = curint/9;
+                int nextc = curint%9;
+                int nextnumidx=0;
+                while(nextnumidx<9&&(rows[nextr][nextnumidx]||cols[nextc][nextnumidx]||sqrs[square(nextr,nextc)][nextnumidx])){nextnumidx++;}
+                if ( nextnumidx<9 ) { // if can place next one
+                    dfs.push({nextr,nextc,nextnumidx,nextr,nextc});
+                    numsfilled++;
+                    rows[nextr][nextnumidx]=true;
+                    cols[nextc][nextnumidx]=true;
+                    sqrs[square(nextr,nextc)][nextnumidx]=true;
+                    board[nextr][nextc]=nextnumidx+1+'0';
+                } else { // if can't place next one change top
+                    dfs.top()[3]=nextr;
+                    dfs.top()[4]=nextc;
+                }
+            } else { //just popped off next one or just tried to place next one but failed
+                // remove previous one
+                int currentr = dfs.top()[0];
+                int currentc = dfs.top()[1];
+                int currentn = dfs.top()[2];
+                rows[dfs.top()[0]][dfs.top()[2]]=false;
+                cols[dfs.top()[1]][dfs.top()[2]]=false;
+                sqrs[square(dfs.top()[0],dfs.top()[1])][dfs.top()[2]]=false;
+                board[dfs.top()[0]][dfs.top()[1]]='.';
+                dfs.pop();
+                numsfilled--;
+                // see if we can place a subsequent number in this same slot
+                int nextnumidx = currentn+1;
+                while(nextnumidx<9&&(rows[currentr][nextnumidx]||cols[currentc][nextnumidx]||sqrs[square(currentr,currentc)][nextnumidx])){nextnumidx++;}
+                if ( nextnumidx<9 ) { // if can place next one
+                    // add next one
+                    dfs.push({currentr,currentc,nextnumidx,currentr,currentc});
+                    numsfilled++;
+                    rows[currentr][nextnumidx]=true;
+                    cols[currentc][nextnumidx]=true;
+                    sqrs[square(currentr,currentc)][nextnumidx]=true;
+                    board[currentr][currentc]=nextnumidx+1+'0';
+                } else { // if can't place next one change the newly currnent top
+                    dfs.top()[3]=currentr;
+                    dfs.top()[4]=currentc;
+                }
+            }
+        }
+        
+        return;
+    }
+};-
