@@ -1,0 +1,44 @@
+class Solution {
+public:
+    int calculate(string s) {
+        // runtime = 8ms, which is 85th percentile
+        // memory usage = 8MB, which is 70th percentile
+        // Strategy: use a stack to calculate values. 
+        // Each time I open a parenthesis, I add a layer to the stack.
+        // Each time I close a parenthesis, I end the calculation for that layer and add the
+        // number to the next lowest layer of the stack.
+        stack<pair<int,int>> values; // first is sign (+ or -) for that layer, second is cumulative value
+        int sign = 1; // start with positive sign
+        values.push({1,0}); // initialization
+        int nn=0; // nn is the current number
+        // I will use a +,-,(,or) to tell me a number has ended. 
+        // This flag tells me if I have not yet seen a number, so I can handle unitary -.
+        bool beforefirstnum = true; 
+        for (int ii=0; ii<s.size(); ii++){
+            if      ( s[ii]==' ' ){} // spaces ignored
+            // For the next two, add the number nn only if I am not before the first number.
+            else if ( s[ii]=='-' ) { if (!beforefirstnum) values.top().second+=sign*nn; nn=0; sign = -1;}
+            else if ( s[ii]=='+' ) { if (!beforefirstnum) values.top().second+=sign*nn; nn=0; sign =  1;}
+            else if ( s[ii]=='(' ) {
+                // Put another layer on the stack with the appropriate sign and reset vars.
+                values.push({sign,0});
+                beforefirstnum = true;
+                sign = 1;
+            } else if ( s[ii]==')' ){
+                // Removing a layer from the stack. Reset variables. Add to lower layer.
+                values.top().second+=sign*nn; 
+                nn=0;
+                pair<int,int> ret = values.top();
+                values.pop();
+                values.top().second += ret.first*ret.second;
+                beforefirstnum = true;
+            } else {
+                // Add digits to the current number. Change flag to indicate we are past
+                // any unitary -. (I just realized I might not need this flag.)
+                nn = 10*nn+(s[ii]-'0');
+                beforefirstnum = false;
+            }
+        }
+        return values.top().second+sign*nn;
+    }
+};
