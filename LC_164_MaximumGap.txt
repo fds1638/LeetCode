@@ -1,0 +1,45 @@
+class Solution {
+public:
+    int maximumGap(vector<int>& nums) {
+        // runtime = 750ms, which is 5th percentile
+        // memory usage = 132MB, which is 5th percentile
+        // The problem gave a hint to consider bucket or radix sorts.
+        // So I wrote one. I looked at the wikipedia pages below in order to 
+        // understand the algorithms, but the code is all mine.
+        // https://en.wikipedia.org/wiki/Radix_sort
+        
+        if (nums.size()<=1 ) return 0; // per instructions
+        
+        // Go through and get the maximum value of the vector so we know how many digits we have.
+        int maxval = 0;
+        vector<int> numsvec(nums.size());
+        for (int ii=0; ii<nums.size(); ii++) { maxval = max(maxval,nums[ii]); numsvec[ii]=nums[ii];}
+        if ( maxval==0 ) return 0;  // all elements of nums must be zero
+                                              
+        int maxdigits = floor(log10(maxval)); // get the number of digits of the largest number
+        
+        // Here is the radix sort, least significant digit to most significant.
+        // After every loop, I write the current state into numsvec.
+        for (int ii=0; ii<=maxdigits; ii++){
+            map<int, vector<int>> digmap;
+            int powerOf10 = round(pow(10,ii));
+            for (int jj=0; jj<nums.size(); jj++) { 
+                digmap[(numsvec[jj]/powerOf10)%10].push_back(numsvec[jj]);
+            } 
+            map<int, vector<int>>::iterator it;
+            int idx = 0;
+            for (it=digmap.begin(); it!=digmap.end(); it++){
+                for (int jj=0; jj<it->second.size(); jj++){
+                    numsvec[idx]=it->second[jj];
+                    idx++;
+                }
+            }
+        }
+        
+        // Now go through the sorted numsvec and find the greatest gap.
+        int retval = 0;
+        for (int ii=1; ii<numsvec.size(); ii++) { retval=max(retval,numsvec[ii]-numsvec[ii-1]); } 
+        
+        return retval;
+    }
+};
