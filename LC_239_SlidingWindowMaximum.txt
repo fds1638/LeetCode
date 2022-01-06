@@ -1,0 +1,32 @@
+class Solution {
+public:
+    vector<int> maxSlidingWindow(vector<int>& nums, int k) {
+        // runtime = 600ms, which is 7th percentile
+        // memory usage = 143MB, which is 30th percentile
+        // This was a quick one. Strategy is to put the numbers in a priority queue, pq,
+        // from which I can always access the max. Have a second priority queue, todelete,
+        // which has the numbers that need to be deleted from pq because they are no longer
+        // in the window. We need to delete numbers from pq only when they would be the current
+        // max, otherwise we don't need to take the time to delete every time the window moves.
+        
+        if (k==1) return nums; // no need to go through any calculations
+        
+        vector<int> retval; // return value
+
+        // Go through the first k numbers, since no deletion up to now
+        priority_queue<int> pq;
+        for (int ii=0; ii<k; ii++){ pq.push(nums[ii]); }
+        retval.push_back(pq.top());
+        
+        // Go through the rest of the numbers, deleting from pq only if the top value needs to be deleted.
+        priority_queue<int> todelete;
+        for (int ii=k; ii<nums.size(); ii++){
+            todelete.push(nums[ii-k]);
+            pq.push(nums[ii]);
+            while ( todelete.size()>0 && todelete.top()==pq.top() ) { todelete.pop(); pq.pop(); }
+            retval.push_back(pq.top());
+        }
+        
+        return retval;
+    }
+};
