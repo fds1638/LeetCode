@@ -1,0 +1,111 @@
+class Solution {
+public:
+    int complementaryNumber(int rr) { 
+        // given a seat number, whatis its complementary seat number?
+        if ( rr%2==0 ) return rr+1;
+        return rr-1;
+    }
+    int minSwapsCouples(vector<int>& row) {
+        // runtime = betwee 0ms and 4ms, which is 50th to 100th percentile
+        // memory usage = 7.4MB, which is 47th percentile
+        // With people sitting in a row, every person needs to be holding hands with the person
+        // next to them. So the lower seat number must be even, the higher seat number must be odd,
+        // for each pair.
+
+        int persons = row.size();
+        int couples = persons/2;
+        vector<bool> needtomove(persons,false);      // true if number at this index needs to move
+        vector<int> complementindex(persons,-1);    // index at which complement is
+        int badpairs = 0;                           // number of pairs with non-complementary numbers
+        for (int ii=0;ii<persons;ii++) {
+            if ( ii%2==0 ) { // even index ii
+                if (row[ii]%2==1 && row[ii+1]!=row[ii]-1) { needtomove[ii]=true; badpairs++; } 
+                if (row[ii]%2==0 && row[ii+1]!=row[ii]+1) { needtomove[ii]=true; badpairs++; } 
+            } else {  // odd index ii
+                if (row[ii]%2==1 && row[ii-1]!=row[ii]-1) { needtomove[ii]=true; badpairs++; } 
+                if (row[ii]%2==0 && row[ii-1]!=row[ii]+1) { needtomove[ii]=true; badpairs++; } 
+            }
+            int complement = (row[ii]%2==0)?row[ii]+1:row[ii]-1;
+            complementindex[complement]=ii;
+        }
+        badpairs/=2;
+        
+        int swaps = 0;
+        while ( badpairs>0 ){
+            // see if there is a pair where I create two clear
+            for (int ii=0;ii<persons;ii=ii+2) {
+                if ( needtomove[ii] ) { // if it needs to move
+                    // where is its complement
+                    int locomplement = complementindex[row[ii]];
+                    // where is the complement of its currentpartner
+                    int hicomplement = complementindex[row[ii+1]];
+                    // are they paired
+                    // they have to be next to each other and in the right place
+                    if ( locomplement+1==hicomplement && locomplement%2==0) {
+                        // switch b and c
+                        int temp = row[ii+1];
+                        row[ii+1] = row[locomplement];
+                        row[locomplement] = temp;
+                        // update complementindex
+                        complementindex[row[ii]]=ii+1;
+                        complementindex[row[hicomplement]]=locomplement;
+                        // update needtomove
+                        needtomove[ii]=false;
+                        needtomove[ii+1]=false;
+                        needtomove[locomplement]=false;
+                        needtomove[hicomplement]=false;
+                        // update badpairs
+                        badpairs-=2;
+                        // update swaps
+                        swaps++;
+                    } else if ( hicomplement+1==locomplement && hicomplement%2==0 ){
+                        // switch b and d
+                        int temp = row[ii+1];
+                        row[ii+1] = row[locomplement];
+                        row[locomplement] = temp;
+                        // update complementindex
+                        complementindex[row[ii]]=ii+1;
+                        complementindex[row[hicomplement]]=locomplement;
+                        // update needtomove
+                        needtomove[ii]=false;
+                        needtomove[ii+1]=false;
+                        needtomove[hicomplement]=false;
+                        needtomove[locomplement]=false;
+                        // update badpairs
+                        badpairs-=2;
+                        // update swaps
+                        swaps++;
+                    }
+                    // if so, make the appropriate switch and increment switchcount
+                }
+            }
+            // no more doubles to remove
+            // start at index zero and find the first pair that needs to move
+            // if there is a pair then switch them
+            bool madeaswitch = false;
+            for (int ii=0;ii<persons;ii=ii+2) {
+                if ( needtomove[ii] && !madeaswitch ){
+                    int mycomp = complementindex[row[ii]];
+                    int mycompneighbor = (mycomp%2==0)?mycomp+1:mycomp-1;
+                    int temp = row[mycompneighbor];
+                    row[mycompneighbor]=row[ii];
+                    row[ii]=temp;
+                    // update complementindex
+                    complementindex[row[mycomp]]=mycompneighbor;
+                    int comp = (row[ii]%2==0)?row[ii]+1:row[ii]-1;
+                    complementindex[comp]=ii;
+                    // update needtomove
+                    needtomove[mycomp]=false;
+                    needtomove[mycompneighbor]=false;
+                    // update badpairs
+                    badpairs--;
+                    // update swaps
+                    swaps++;
+                    madeaswitch=true;
+                }
+            }            
+        }
+
+        return swaps;
+    }
+};
