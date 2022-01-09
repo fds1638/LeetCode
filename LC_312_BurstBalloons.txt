@@ -1,0 +1,52 @@
+class Solution {
+private:
+    int valueAtIndex(int ii, vector<int>& nums){
+        // if ii is an index in nums, return the value of nums at that index
+        if ( ii>=0 && ii<nums.size() ) return nums[ii];
+        // otherwise ii is an endpoint so return 1
+        return 1;
+    }
+    int matrixIndex(int ii) {
+        return ii+1; // matrix starts and ends with the 1's. Just a convenience method.
+    }
+    int intervalValue(int a, int b, vector<int>&nums, vector<vector<int>>&intvls) {
+        if ( b<=a ) { cout<<"error"<<endl; return -1; }
+        // If have already calculated this, look it up.
+        if ( intvls[matrixIndex(a)][matrixIndex(b)]>-1 ) return intvls[matrixIndex(a)][matrixIndex(b)];
+        // If the numbers are next to each other, then 0 is between them.
+        if ( b==a+1 ) {
+            intvls[matrixIndex(a)][matrixIndex(b)] = 0;
+            return 0;
+        }
+        // Check all possibilities for putting the next number in between these two endpoints.
+        // Choose the optimum.
+        int retval = -1;
+        for (int ii=a+1; ii<b; ii++){
+            int lo = intervalValue( a, ii, nums, intvls);
+            int hi = intervalValue(ii,  b, nums, intvls);
+            retval = max(retval,lo+hi+valueAtIndex(a,nums)*valueAtIndex(ii,nums)*valueAtIndex(b,nums));
+        }
+        // Memoize to avoid re-calculation.
+        intvls[matrixIndex(a)][matrixIndex(b)] = retval;
+        
+        return retval;  
+    }
+public:
+    int maxCoins(vector<int>& nums) {
+        // runtime = 816ms, which is 35th percentile
+        // memory usage = 10.2MB, which is 27th percentile
+        // Key Insight: I can break this down into intervals, and calculate each interval separately.
+        // For example, if the last number removed is ii, then it looks like:
+        // 1 ....... ii ........ 1
+        // where the dots are the numbers of nums that have already been removed. 
+        // This now breaks down into two problems, from 1....ii and from ii....1.
+        // Put the results to subproblems into matrix intvls for memoization.
+        // Can also think of this as adding numbers rather than removing numbers.
+        // For each subinterval, optimize choice of where next number in that subinterval in put in.
+        vector<vector<int>> intvls(nums.size()+2, vector<int>(nums.size()+2,-1));
+        // With the two end values of 1, we have an array from index -1 to index nums.size()
+        int retval = intervalValue(-1, nums.size(), nums, intvls);
+        
+        return retval;
+    }
+};
