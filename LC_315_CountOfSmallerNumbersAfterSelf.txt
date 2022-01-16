@@ -1,0 +1,49 @@
+class Solution {
+private: 
+    int readNum(int n, unordered_map<int,int>&cmap) {
+        // This read the current Fenwick tree by adding the incremental numbers.
+        int retval = 0;
+        int curval = 0;        
+        while ( n>0 ){
+            int addon = pow(2,round(floor(log2(n))));
+            n -= addon;
+            curval += addon;
+            retval += cmap[curval];
+        }
+        return retval;
+    }
+    void writeNum(int base, int n, int maxpower, unordered_map<int,int>&cmap){
+        // For each n this writes the Fenwick tree. It adds one to each number that is 
+        // greater than it. For example, if we have a 5, we want to add one to the cmap 
+        // entries for 8, 16, 32, etc. up to the max value of 2^16.
+        // We then recursively add one to the entry for 6.
+        int nextbase = base;  // At first this is 0, but then for example if n=5 then the next base is 4.
+        int nextmaxpower = 0; // Each time your recurse deeper, the size of the "tree" is smaller.
+        for (int ii=0; ii<maxpower; ii++){ // Could avoid this iteration with a calculation
+            if ( n >= base + pow(2,ii) ){      // If n is greater than this power of 2, store vals in 
+                nextbase = base + pow(2,ii);   // case this is the last power of two it's greater than.
+                nextmaxpower = ii;
+            } else {
+                cmap[base + pow(2,ii)]++;      // For all greater numbers increase the Fenwick tree entries.
+            }
+        }
+        if ( nextmaxpower>0 ) writeNum(nextbase, n, nextmaxpower, cmap); // recursion
+        return;
+    }
+public:
+    vector<int> countSmaller(vector<int>& nums) {
+        // runtime = 820ms, which is 35th percentile
+        // memory usage = 97.1MB, which is 61st percentile
+        vector<int> retval(nums.size()); // return value
+        unordered_map<int,int> cmap;     // implement Fenwick tree with cmap
+        int absminint = 10001;           // add this number to make all numbers positive
+        int maxpower = 16;               // actually a function of absminint, want 2^maxpower>2*absminint
+        for (int ii=nums.size()-1;ii>=0;ii--){ // loop through from back to front
+            int curval = readNum(nums[ii]+absminint,cmap);   // read current state of Fenwick tree
+            retval[ii] = curval;                             // write to return value
+            writeNum(0, nums[ii]+absminint, maxpower, cmap); // write in current value to Fenwick tree
+        } 
+
+        return retval;
+    }
+};
