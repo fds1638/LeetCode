@@ -1,0 +1,56 @@
+class Solution {
+public:
+    static bool mysort(vector<int> a,  vector<int> b){
+        if (a[0]<b[0]) return true;
+        if (a[0]>b[0]) return false;
+        else return a[1]<b[1];
+    }
+
+    int intersectionSizeTwo(vector<vector<int>>& intervals) {
+        // runtime = 224, which is 11th percentile
+        // memory usage = 56MB, which is 5th percentile
+        // Not very efficient, but got the job done.
+        
+        // A quick response if there is only one interval.
+        if ( intervals.size()==1 ) return 2;
+        
+        // Sort the intervals first by their first coordinate, then by their second.
+        // In the sorted vector, any later interval has a first coordinate at least 
+        // equal to any previous vector. And if the first coordinates are equal, the
+        // vector with the later second coordinate comes later.
+        sort(intervals.begin(),intervals.end(),mysort);
+        
+        // Now comes the greedy algorithm. Start at the back. Place two
+        // coordinates at the leftmost end of the last interval. This
+        // takes care of the last interval and gives us the best chance
+        // of those coordinates working for earlier intervals as well.
+        // Keep track of the two leftmost endpoint as we work our way forward in the vector.
+        int lo = intervals[intervals.size()-1][0];
+        int hi = intervals[intervals.size()-1][0]+1;
+        int count = 2; 
+
+        // When you go to the previous interval:
+        // If its upper endpoint is equal to or above the current hi value, it's covered. Do nothing.
+        // If its upper endpoint is below the current lo value, move both lo and hi to 
+        // their lowest possible positions and increment the count by 2.
+        // If its upper endpoint includes lo but not hi, then move lo and hi depending on
+        // whether lo is already at the leftmost endpoint or not. Increment count by 1.
+        for (int ii=intervals.size()-2; ii>=0; ii--){
+            if ( intervals[ii][1]<lo ){ //need two new
+                count += 2;
+                lo = intervals[ii][0];
+                hi = intervals[ii][0]+1;
+            }
+            else if ( intervals[ii][1]<hi ){ //need one new
+                count += 1;
+                if ( lo==intervals[ii][0] ) hi = intervals[ii][0]+1;
+                else {
+                    hi = lo;
+                    lo=intervals[ii][0] ;
+                }
+            }
+        } 
+
+        return count;
+    }
+};
