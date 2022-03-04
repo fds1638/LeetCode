@@ -1,0 +1,37 @@
+class Solution {
+public:
+    int minPatches(vector<int>& nums, int n) {
+        // runtime: 8ms, which is 71st percentile
+        // memory usage: 11MB, which is 57th percentile
+        // This works on a greedy principle, specifically if we can add up to 
+        // all numbers up to the number "covered", then the next number we cannot
+        // add up to is covered+1. So the greedy move is to patch using the number
+        // covered+1, which now makes covered = covered+(covered+1).
+        
+        int patches = 0;
+        long covered = 0;
+        
+        // Go through the array nums, which seems to be already sorted.
+        for (int ii=0; ii<nums.size(); ii++){
+            if ( covered<n ){  // if covered hasn't reached n yet
+                // this while loop fills the "gaps" until we reach nums[ii]
+                while ( covered+1<nums[ii] && covered<n ){ // if covered hasn't reached the next nums
+                    covered += covered+1;
+                    patches++;
+                }
+                covered += nums[ii]; // since nums[ii] is already in the 
+            }
+        }
+        
+        // if we have covered equal to or above n, we are done
+        if ( covered>=n ) return patches;
+        
+        // if necessary, fill in the "gaps" until we reach n
+        while ( covered+1<n ){
+            covered += covered+1;
+            patches++;
+        }
+        
+        return patches;
+    }
+};
