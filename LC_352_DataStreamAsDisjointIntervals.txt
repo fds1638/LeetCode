@@ -1,0 +1,57 @@
+class SummaryRanges {
+private:
+    map<int,vector<int>> ranges;
+    
+    void checkForMerge(int val, map<int,vector<int>>::iterator it) {
+        map<int,vector<int>>::iterator checklow = ranges.lower_bound(val-1);
+        if ( checklow==it ) {}
+        else { it->second[0]=checklow->second[0]; ranges.erase(checklow); }
+    }
+    
+public:
+    SummaryRanges() {
+        
+    }
+    // runtime = 130s, 30th percentile
+    // memory usage = 34MB, which is 33rd percentile
+    
+    // General idea is that we have a map whose key is the higher value of the range.
+    // When a new number comes in, check if the map already has a range including it.
+    // If not, check if the new number should get its own range (ie it's isolated) or if
+    // it is on the lower edge of an existing range.
+    // Then check if the new number is the next number up from a lower range -- if so, 
+    // merge the two ranges and delete the lower one.
+    
+    void addNum(int val) {
+        map<int,vector<int>>::iterator it = ranges.lower_bound(val);
+        if ( it==ranges.end() ) { 
+            pair<map<int,vector<int>>::iterator,bool> r = ranges.insert({val,{val,val}}); 
+            checkForMerge(val,r.first);
+        }
+        else if ( it->second[0]<=val ) {}
+        else if ( it->second[0]==val+1 ) { 
+            it->second[0]=val; 
+            checkForMerge(val,it);
+        }
+        else { 
+            pair<map<int,vector<int>>::iterator,bool> r = ranges.insert({val,{val,val}}); 
+            checkForMerge(val,r.first);
+        }
+    }
+    
+    vector<vector<int>> getIntervals() {
+        map<int,vector<int>>::iterator it;
+        vector<vector<int>> retval;
+        for (it=ranges.begin(); it!=ranges.end(); it++){
+            retval.push_back(it->second);
+        }
+        return retval;
+    }
+};
+
+/**
+ * Your SummaryRanges object will be instantiated and called as such:
+ * SummaryRanges* obj = new SummaryRanges();
+ * obj->addNum(val);
+ * vector<vector<int>> param_2 = obj->getIntervals();
+ */
