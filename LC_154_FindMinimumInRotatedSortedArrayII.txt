@@ -1,0 +1,35 @@
+class Solution {
+public:
+    int findMin(vector<int>& nums) {
+        // runtime = 18ms, 6th percentile
+        // memory usage = 22MB, 20th percentile
+        // Just a binary search, with a special case if lo, med, and hi return equal numbers,
+        // which is a situation where you don't really get any information.
+        
+        if ( nums[0]<nums[nums.size()-1] ) { return nums[0]; }
+        int lo = 0;
+        int hi = nums.size()-1;
+        while ( hi-lo>1 ){
+            int med = (lo+hi)/2;
+            if ( nums[lo]<nums[med]  && nums[med]<nums[hi] ) lo = med;
+            if ( nums[lo]==nums[med] && nums[med]<nums[hi] ) return nums[lo];
+            if ( nums[lo]>nums[med]  && nums[med]<nums[hi] ) hi = med;
+            
+            if ( nums[lo]<nums[med]  && nums[med]==nums[hi] ) return nums[lo];
+            if ( nums[lo]==nums[med] && nums[med]==nums[hi] ) {
+                vector<int> lvec;
+                for (int ii=lo; ii<=med; ii++) { lvec.push_back(nums[ii]);}
+                vector<int> rvec;
+                for (int ii=med; ii<=hi; ii++) { rvec.push_back(nums[ii]);}
+                return min(findMin(lvec),findMin(rvec));
+            }
+            if ( nums[lo]>nums[med]  && nums[med]==nums[hi] ) hi = med;
+            
+            if ( nums[lo]<nums[med]  && nums[med]>nums[hi] ) lo = med;
+            if ( nums[lo]==nums[med] && nums[med]>nums[hi] ) lo = med;
+            if ( nums[lo]>nums[med]  && nums[med]>nums[hi] ) cout<<"error"<<endl;
+            
+        }
+        return min(nums[lo],nums[hi]);
+    }
+};
