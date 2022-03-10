@@ -1,0 +1,71 @@
+class Solution {
+public:
+    vector<vector<int>> outerTrees(vector<vector<int>>& trees) {
+        // runtime = 1226ms, which is 6th percentile
+        // memory usage = 25MB, which is 28th percentile
+        
+        // I'm proud to have figured out a solution on my own, since when I
+        // read other solutions it's all implementation of known algorithms.
+        
+        // The principle is that if a point is on the fence, then for at least
+        // one line through that point all the other points lie on one side of that line.
+        // In other words, for point (x,y) on the fence then there is some a and b
+        // such that a*x+b*y is either the max or the min value among the trees.
+        
+        // Taking advantage of the fact that the points are lattice points with coordinates
+        // between 0 and 100, I guessed at a set of slopes b/a, equivalently vectors [a,b],
+        // which will give me enough directions to check for maxes and mins.
+        // If the problem includes more points, this may not work. (But I thought of it myself!)
+        
+        // Create a map of vectors pointing in many directions.
+        map<vector<int>,vector<int>> s2;
+        for (int ii=1; ii<=15; ii++){
+            s2[{1,ii}]={INT_MIN,INT_MAX};
+            s2[{-1,ii}]={INT_MIN,INT_MAX};
+            s2[{ii,1}]={INT_MIN,INT_MAX};
+            s2[{ii,-1}]={INT_MIN,INT_MAX};
+        }
+        for (int ii=1; ii<=49; ii++){
+            s2[{2,2*ii+1}]={INT_MIN,INT_MAX};
+            s2[{-2,2*ii+1}]={INT_MIN,INT_MAX};
+            s2[{2*ii+1,2}]={INT_MIN,INT_MAX};
+            s2[{2*ii+1,-2}]={INT_MIN,INT_MAX};
+        }
+
+        // For each direction, record the max and min value among the trees.
+        // Also, do the maxes and mins horizontally and vertically separately
+        // (though they could have been included in s2).
+        int xmax=INT_MIN, xmin=INT_MAX, ymax=INT_MIN, ymin=INT_MAX;
+        map<vector<int>,vector<int>>::iterator s2it;
+        for (int ii=0; ii<trees.size(); ii++){ 
+            xmax = max(xmax,trees[ii][0]);
+            xmin = min(xmin,trees[ii][0]);
+            ymax = max(ymax,trees[ii][1]);
+            ymin = min(ymin,trees[ii][1]);
+            for(s2it=s2.begin();s2it!=s2.end();s2it++){
+                s2it->second[0] = max(s2it->second[0],s2it->first[0]*trees[ii][0]+s2it->first[1]*trees[ii][1]);
+                s2it->second[1] = min(s2it->second[1],s2it->first[0]*trees[ii][0]+s2it->first[1]*trees[ii][1]);
+            }
+        }
+        
+        // loop through the trees and for each:
+        // if it is an extreme value in at least one direction then it's on the fence
+        vector<vector<int>> retval; // these are the trees on the fence
+        for (int ii=0; ii<trees.size(); ii++){ 
+            if ( trees[ii][0]==xmax || trees[ii][0]==xmin || trees[ii][1]==ymax || trees[ii][1]==ymin ){
+                retval.push_back(trees[ii]);
+            } else {
+                bool anextreme = false;
+                s2it=s2.begin();
+                while( !anextreme && s2it!=s2.end() ){
+                    int dotprod = s2it->first[0]*trees[ii][0]+s2it->first[1]*trees[ii][1];
+                    if ( s2it->second[0]==dotprod || s2it->second[1]==dotprod ) { anextreme = true; }
+                    s2it++;
+                }
+                if ( anextreme ) retval.push_back(trees[ii]);
+            }
+        }
+        
+        return retval;
+    }
+};
