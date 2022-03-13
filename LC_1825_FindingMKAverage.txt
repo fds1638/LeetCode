@@ -1,0 +1,148 @@
+class MKAverage {
+// runtime = 490ms, which is 71st percentile
+// memory usage = 127MB, which is 94th percentile
+// While the data stream is running, keep three maps: klo, midmap, and khi.
+// For each map the key is a number from the data stream and the value is the number of times
+// that key is currently recorded in that map.
+// khi and klo are the maps containing the k highest and k lowest, respectively, of the last
+// m numbers seen. midmap contains the rest. It is midmap's average that we want.
+// Since khi, klo, and midmap are ordered sets, it is easy to get their max and min numbers
+// using iterators and reverse iterators and map.begin() and map.rbegin().
+// Keep track of the values in the three maps as the data streams comes in, and keep track
+// of the total of the numbers in midmap. Then finding the average is an O(1) operation.
+private:
+    long mm, kk, ii, khisum, klosum, msum;
+    vector<int> q;
+    map<int,int> khi;
+    map<int,int> klo;
+    map<int,int> midmap;
+public:
+    MKAverage(int m, int k) {
+        mm = m;
+        kk = k;
+        ii = 0;
+        khisum = 0;
+        klosum = 0;
+        msum   = 0;
+    }
+    
+    void addElement(int num) {
+        q.push_back(num);
+        if ( ii<2*kk ){
+            khi[num]++;
+            if ( ii%2==1 )  {
+                klo[khi.begin()->first]++;
+                if (khi[khi.begin()->first]>0) khi[khi.begin()->first]--;
+                else cout<<"ERROR khi reduction"<<endl;
+                if ( khi.begin()->second==0 ) khi.erase(khi.begin()->first);
+            }
+            else if ( ii>=2 && ii%2==0 ){
+                int temphi = khi.begin()->first;
+                int templo = klo.rbegin()->first;
+                klo[temphi]++;
+                khi[templo]++;
+                if (khi[temphi]>0) khi[temphi]--;
+                else cout<<"ERROR khi reduction"<<endl;
+                if ( khi[temphi]==0 ) khi.erase(temphi);
+                if (klo[templo]>0) klo[templo]--;
+                else cout<<"ERROR klo reduction"<<endl;
+                if ( klo[templo]==0 ) klo.erase(templo);
+                
+            }
+        }
+        else if ( ii<mm ) {
+            if ( num>khi.begin()->first ){
+                khi[num]++;
+                midmap[khi.begin()->first]++;
+                msum += khi.begin()->first;
+                if (khi[khi.begin()->first]>0) khi[khi.begin()->first]--;
+                else cout<<"ERROR8";
+                if ( khi.begin()->second==0 ) khi.erase(khi.begin()->first);
+            } 
+            else if ( num<klo.rbegin()->first ){
+                klo[num]++;
+                midmap[klo.rbegin()->first]++;
+                msum += klo.rbegin()->first;
+                if (klo[klo.rbegin()->first]>0) klo[klo.rbegin()->first]--;
+                else cout<<"ERROR7";
+                if ( klo.rbegin()->second==0 ) klo.erase(klo.rbegin()->first);
+            }
+            else {
+                midmap[num]++;
+                msum += num;
+            }
+            if ( midmap.begin()->first < klo.rbegin()->first ) cout<<"ERROR lo"<<endl;
+            if ( midmap.rbegin()->first > khi.begin()->first ) cout<<"ERROR hi"<<endl;
+        }
+        else {
+            int removenum = q[ii-mm];
+
+            if ( midmap.find(removenum)!=midmap.end() ) {
+            //if ( removenum>=midmap.begin()->first && removenum<=midmap.rbegin()->first ) {
+                msum -= removenum;
+                if (midmap[removenum]>0) midmap[removenum]--;
+                else cout<<"ERROR6";
+                if ( midmap[removenum]==0 ) midmap.erase(removenum);
+            }
+            else if ( khi.find(removenum)!=khi.end() ){
+            //else if ( removenum >= khi.begin()->first ){
+                khi[removenum]--;
+                if ( khi[removenum]==0 ) khi.erase(removenum);
+                khi[midmap.rbegin()->first]++;
+                msum -= midmap.rbegin()->first;
+                if ( midmap[midmap.rbegin()->first]>0) midmap[midmap.rbegin()->first]--;
+                else cout<<"ERROR5";
+                if ( midmap.rbegin()->second==0 ) midmap.erase(midmap.rbegin()->first);
+            }
+            else if ( klo.find(removenum) != klo.end() ){
+            //else if ( removenum <= klo.rbegin()->first ){
+                klo[removenum]--;
+                if ( klo[removenum]==0 ) klo.erase(removenum);
+                klo[midmap.begin()->first]++;
+                msum -= midmap.begin()->first;
+                if ( midmap[midmap.begin()->first]>0) midmap[midmap.begin()->first]--;
+                else cout<<"ERROR4";
+                if ( midmap.begin()->second==0 ) midmap.erase(midmap.begin()->first);
+            }
+            else { cout<<"ERROR3"<<endl; }
+
+            if ( num>khi.begin()->first ){
+                khi[num]++;
+                midmap[khi.begin()->first]++;
+                msum += khi.begin()->first;
+                if (khi[khi.begin()->first]>0) khi[khi.begin()->first]--;
+                else cout<<"ERROR2";
+                if ( khi.begin()->second==0 ) khi.erase(khi.begin()->first);
+            } 
+            else if ( num<klo.rbegin()->first ){
+                klo[num]++;
+                midmap[klo.rbegin()->first]++;
+                msum += klo.rbegin()->first;
+                if (klo[klo.rbegin()->first]>0) klo[klo.rbegin()->first]--;
+                else cout<<"ERROR1";
+                if ( klo.rbegin()->second==0 ) klo.erase(klo.rbegin()->first);
+            }
+            else {
+                midmap[num]++;
+                msum += num;
+            }
+            //cout<<"q "; for (int jj=0; jj<q.size(); jj++) { cout<<q[jj]<<" "; }cout<<endl;
+            //cout<<"removeii "<<removeii<<" "<<q[removeii]<<endl;
+        }
+        
+        //cout<<"msum "<<endl;
+        ii++;
+    }
+    
+    int calculateMKAverage() {
+        if ( q.size()<mm ) return -1; 
+        return (msum)/(mm-2*kk);
+    }
+};
+
+/**
+ * Your MKAverage object will be instantiated and called as such:
+ * MKAverage* obj = new MKAverage(m, k);
+ * obj->addElement(num);
+ * int param_2 = obj->calculateMKAverage();
+ */
