@@ -1,0 +1,58 @@
+class afterK{
+public:
+    bool operator()(pair<int,string> a, pair<int,string> b) {
+        if ( a.first<b.first ) return true;
+        else if ( a.first>b.first ) return false;
+        return a.second.compare(b.second)>0;
+    }
+};
+class beforeK{
+public:
+    bool operator()(pair<int,string> a, pair<int,string> b) {
+        if ( a.first>b.first ) return true;
+        else if ( a.first<b.first ) return false;
+        return a.second.compare(b.second)<0;
+    }
+};
+class SORTracker {
+private:
+    priority_queue<pair<int,string>,vector<pair<int,string>>,afterK> future;
+    priority_queue<pair<int,string>,vector<pair<int,string>>,beforeK> past;
+    int k;
+public:
+    SORTracker() {
+        k = 0;
+    }
+    // runtime = 604ms, which is 59th percentile
+    // memory usage = 148MB, which is 87th percentile
+    // Strategy: have two priority queues. Sort by rating then lexicographically by name,
+    // one priority queue decreasing (called future) the other increasing (called past).
+    // The number of pairs in "past" is the count of get calls already made. All other pairs
+    // go in "future". Although note that depending on how the add calls come, a pair currently
+    // in the past can be in the future.
+    // Since always maintain the k "best" pairs in the past, when the next get call comes it always
+    // wants the top of the future priority queue.
+    
+    void add(string name, int score) {
+        past.push({score,name});
+        if ( past.size()>k ) {
+            future.push(past.top());
+            past.pop();
+        }
+    }
+    
+    string get() {
+        pair<int,string> retval = future.top();
+        past.push(future.top());
+        future.pop();
+        k++;
+        return retval.second;
+    }
+};
+
+/**
+ * Your SORTracker object will be instantiated and called as such:
+ * SORTracker* obj = new SORTracker();
+ * obj->add(name,score);
+ * string param_2 = obj->get();
+ */
