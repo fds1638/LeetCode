@@ -1,0 +1,27 @@
+class Solution {
+public:
+    int poorPigs(int buckets, int minutesToDie, int minutesToTest) {
+        // runtime = 0ms, which is 100th percentile
+        // memory usage = 6.2MB, which is 27th percentile
+        // I solved this by a dynamic programming table but then realized
+        // the answers were just powers of roundsPlusOne. So I coded it that way.
+        // I could do a binary search instead of linear, but was already at 0ms.
+        
+        // If there is only one bucket then it must have the poison.
+        if ( buckets==1 ) return 0;
+        
+        // Figure out how many rounds of testing there are.
+        int rounds = minutesToTest / minutesToDie;
+        
+        // Add one to it.
+        int roundsPlusOne = rounds+1;
+        
+        // Increase the number of pigs until the number of buckets you
+        // can test is at least the number of buckets the problem asks you for.
+        // Could also do this as a binary search.
+        int pigs = 1;
+        while ( pow(roundsPlusOne,pigs)<buckets ) { pigs++; }
+        
+        return pigs;
+    }
+};
