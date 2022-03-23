@@ -1,0 +1,48 @@
+class Solution {
+private:
+    set<int> stoneset; // make a set to find jump possibilities in log(n) time
+    map<int,vector<int>> tried; // memoization for paths already tried
+    bool found; // when true, have found a solution
+    int last; // record location of last stone so know when have finished
+    void nextJump(int lastjump, int curloc){
+        // Check to see if I have already tried jumping to this location with this size jump.
+        // If so, just return.
+        // If not, record this jump and location in tried, and proceed.
+        map<int,vector<int>>::iterator triedit = tried.find(curloc);
+        if ( triedit!=tried.end()){
+            for (int ii=0; ii<triedit->second.size();ii++) {
+                if ( triedit->second[ii]==lastjump ) return;
+            }
+            triedit->second.push_back(lastjump);
+        } else {
+            tried[curloc].push_back(lastjump);
+        }
+        
+        // Check to see if I have reached the end.
+        if ( curloc==last ) {found = true; return;}
+        
+        // Given the size of my last jump, go through all the possibilities for the next jump.
+        int lastminus1 = max(lastjump-1,1);
+        int lastplus1  = lastjump+1;
+        if ( !found && lastjump>1 && stoneset.find(curloc+lastminus1)!= stoneset.end() ){ nextJump(lastminus1,curloc+lastminus1); }
+        if ( !found && stoneset.find(curloc+lastjump)  != stoneset.end() ){ nextJump(lastjump  ,curloc+lastjump  ); }
+        if ( !found && stoneset.find(curloc+lastplus1 )!= stoneset.end() ){ nextJump(lastplus1 ,curloc+lastplus1 ); }
+        return;
+    }
+public:
+    bool canCross(vector<int>& stones) {
+        // runtime = 154ms, which is 75th percentile
+        // memory usage = 30MB, which 75th percentile 
+        // Essentially do a DFS, with memoization to record paths already tried.
+        
+        if ( stones[1]-stones[0]!=1 ) return false;
+        
+        stoneset = set(stones.begin(),stones.end()); // make a set
+        found = false;
+        last = stones[stones.size()-1]; // record last stone for easy reference
+        
+        nextJump(1, stones[1]);
+            
+        return found;
+    }
+};
