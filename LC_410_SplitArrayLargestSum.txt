@@ -1,0 +1,107 @@
+class Solution {
+private:
+    map<vector<int>, int> tried;
+    vector<int> sums;
+    int returnValue;
+    int morig;
+    int zeroes, nonzeroes, numsmax;
+    
+    void establishSums(vector<int>& nums, int m){ // initialize sums array
+        sums.push_back(0);
+        for (int ii=0; ii<nums.size(); ii++){
+            if ( nums[ii]==0 ) zeroes++;        // also do some checks ..
+            else nonzeroes++;                   // for possible..
+            numsmax = max(numsmax,nums[ii]);    // quick solutions.
+            sums.push_back(sums[ii]+nums[ii]);
+        }
+    }
+    
+    int rangesum(int lo, int hi){ // utility to compus a subinterval
+        return sums[hi+1]-sums[lo];
+    }
+    
+    int bestMaxSplitTwo(vector<int>& nums, int startpos){ // binary search when two intervals left
+        // check memoization
+        map<vector<int>, int>::iterator triedit = tried.find({2,startpos});
+        if ( triedit!=tried.end() ) return triedit->second;
+        // do binary search
+        int total = rangesum(startpos,nums.size()-1);
+        int lo = startpos;
+        int hi = nums.size()-1;
+        if ( hi-lo==1 ) return max(nums[lo],nums[hi]);
+        while ( hi-lo>1 ){
+            int mid = (hi+lo)/2;
+            int losum = rangesum(startpos,mid);
+            int hisum = total - losum;
+            if (losum>=hisum) hi = mid;
+            else lo = mid;
+        }
+        // now lo is the highest index for which losum<hisum
+        // two cases: next number splits evenly, or not
+        int retval = max(rangesum(startpos,lo), total-rangesum(startpos,lo));
+        retval = min(retval,max(rangesum(startpos,lo+1), total-rangesum(startpos,lo+1)));
+        if ( lo+2<=nums.size()-2 && rangesum(startpos,lo+1) == total-rangesum(startpos,lo+1) ) {
+            retval = min(retval,max(rangesum(startpos,lo+2), total-rangesum(startpos,lo+2)));
+        }
+        tried[{2,startpos}]=retval; // memoization
+        return retval;
+    }
+    
+    int splitRecursive(vector<int>& nums, int m, int startpos){
+        // check memoization
+        map<vector<int>, int>::iterator triedit = tried.find({m,startpos});
+        if ( triedit!=tried.end() ) return triedit->second;
+        // Recursively find next level breakdown.
+        int retval = INT_MAX;
+        int ubound = nums.size()-1-(m-1)+1;
+        if ( m>2 ){ // 
+            for (int ii=ubound-1; ii>=startpos; ii--){
+                int thischunk = rangesum(startpos,ii); // iterate over possible sizes of thischunk
+                if ( thischunk<=returnValue ){
+                    int nextiteration = splitRecursive(nums,m-1,ii+1);
+                    int thisround = max(thischunk,nextiteration);
+                    retval = min(retval,thisround);
+                    // If this is a final solution, record it so I know I don't have
+                    // to search when a subinterval sum exceeds returnValue.
+                    if ( m==morig ) {
+                        returnValue = min(returnValue,retval); 
+                    }
+                }
+            }
+        } else if (m==2) { // only two subintervals left
+            retval = min(retval,bestMaxSplitTwo(nums,startpos));
+        } else {
+            cout<<"ERROR"<<endl;
+        }
+        tried[{m,startpos}]=retval; // memoizatioin
+        return retval;
+    }
+public:
+    int splitArray(vector<int>& nums, int m) {
+        // runtime = 488ms, which is 16th percentile
+        // memory uage = 52MB, which is 6th percentile
+        // Strategy: essentially a DFS. If have m intervals then if choose first interval
+        // then you have to divide the rest of nums into m-1 subintervals.
+        // Once you get down to two subintervals, you can do a binary search to find the
+        // best choice of subintervals.
+        // Memoize the 
+        zeroes = 0;
+        nonzeroes = 0;
+        numsmax = 0;
+        establishSums(nums,m);
+        if ( m==1 ) return sums[sums.size()-1];
+        if ( nonzeroes<=m ) return numsmax;
+        morig = m;
+        returnValue = INT_MAX;
+        int quickmax = 0;
+        int mstep = nums.size()/m;
+        for (int ii=0; ii<m-1; ii++){
+            int lo = ii*mstep;
+            int hi = (ii+1)*mstep-1;
+            quickmax = max(quickmax,rangesum(lo,hi));
+        }
+        quickmax = max(quickmax,rangesum((m-1)*mstep,nums.size()-1));
+        returnValue = min(returnValue,quickmax);
+        return splitRecursive(nums,m,0);
+    }
+};
