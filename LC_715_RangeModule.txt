@@ -1,0 +1,92 @@
+class RangeModule {
+private:
+    map<int,int> hois;
+public:
+    RangeModule() {
+        // runtime = 372, which is 44th percentile
+        // memory usage = 70MB, which is 88th percentile
+        // This is ugly, ugly, ugly. 
+        // I thought I was going to have to do a segment tree or something O(log(n)) and
+        // spent some time thinking about that. But then I read LeetCode's hint and it
+        // suggested a set of disjoint intervals with add and remove as O(n) and query
+        // as O(log(n)). I decided to do it as a map (key is left endpoint, value is right),
+        // and to do the query as O(n) as well. I was expecting a TLE, but it worked.
+
+    }
+    
+    void addRange(int left, int right) {
+        pair<map<int,int>::iterator, bool> r = hois.insert({left,right});
+        if ( !r.second ){
+            r.first->second = max(r.first->second,right);
+        }
+        map<int,int>::iterator it = hois.begin();
+        while ( it!=hois.end() ){
+            bool cont = true;
+            while ( cont ){
+                cont = false;
+                map<int,int>::iterator next = it;
+                next++;
+                if ( next!=hois.end() && next->first<=it->second ) { 
+                    cont = true;
+                    it->second = max(it->second,next->second); 
+                    if ( next!=hois.end()) hois.erase(next); 
+                }
+            }
+            it++;
+        }
+        map<int,int>::iterator pit;
+        //for(pit=hois.begin();pit!=hois.end();pit++){cout<<pit->first<<","<<pit->second<<" ";}cout<<endl;
+    }
+    
+    bool queryRange(int left, int right) {
+        map<int,int>::iterator it = hois.begin();
+        while ( it!=hois.end()){
+            if ( it->first<=left && right<=it->second) {
+                //cout<<"true "<<left<<" "<<right<<endl;                
+                return true;
+            }
+            it++;
+        }
+        //cout<<"false "<<left<<" "<<right<<endl;                
+        return false;
+    }
+    
+    void removeRange(int left, int right) {
+        //if (left==73&&right==100) cout<<"remove "<<left<<" "<<right<<endl;
+        map<int,int>::iterator it = hois.begin();
+        while ( it!=hois.end() ){
+            map<int,int>::iterator todelete = it;
+            bool del = false;
+            if ( it->second<=left ){
+                
+            } else if ( it->second>left && it->second<=right && it->first<left ) {
+                it->second = left;
+            } else if ( it->second>left && it->second<=right && it->first==left ) {
+                del = true;
+            } else if ( it->second>left && it->second<=right && it->first>left ) {
+                del = true;
+            } else if ( it->second>right && it->first<left ) {
+                hois.insert({right,it->second});
+                it->second = left;
+            } else if ( it->second>right && it->first==left ) {
+                hois.insert({right,it->second});
+                del = true;   
+            } else if ( it->second>right && it->first>left && it->first<right ) {
+                hois.insert({right,it->second});
+                del = true;
+            }
+            it++;
+            if ( del && todelete!=hois.end() ) hois.erase(todelete);
+        }
+        map<int,int>::iterator pit;
+        //for(pit=hois.begin();pit!=hois.end();pit++){cout<<pit->first<<","<<pit->second<<" ";}cout<<endl;
+    }
+};
+
+/**
+ * Your RangeModule object will be instantiated and called as such:
+ * RangeModule* obj = new RangeModule();
+ * obj->addRange(left,right);
+ * bool param_2 = obj->queryRange(left,right);
+ * obj->removeRange(left,right);
+ */
