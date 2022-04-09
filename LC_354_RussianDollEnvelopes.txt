@@ -1,0 +1,69 @@
+class Solution {
+public:
+    int maxEnvelopes(vector<vector<int>>& envelopes) {
+        // runtime = 937ms, which is 5th percentile
+        // memory usage = 88MB, which is 7th percentile
+        
+        // Strategy:
+        // Sort envelopes by size, smallest to largest, increasing in width then in height
+        // Process envelopes one by one. For each new envelope, the previous envelopes certainly
+        // have a width less than or equal to current envelope width. The question is only 
+        // which envelopes have a lesser height.
+        // Keep a map, maxes. The key is the height, the value is the longest length chain seen for
+        // an envelope with that height. For each new envelope processed, go through all the heights
+        // up until the new envelope's height, and find the max. Add one. That's the longest chain
+        // for the current envelope.
+
+        sort(envelopes.begin(),envelopes.end()); // sort increasing in width then height
+        
+        map<int,int> maxes; // key = height, value = current max length with outermost envelope having this height
+        vector<int> maximums(envelopes.size(),1); // sort of duplicates maxes, keeping max chain length of each envelope
+        // The purpose of having both maxes and maximums is that when processing current envelope, not all the previous
+        // envelopes have a strictly lesser width. So only want to compare height of current envelopes with heights of envelopes 
+        // of strictly lesser width. 
+        // maximums feeds into maxes, it's a question of exactly when something from maximums should go into maxes.
+
+        int retval = 1; // return value, minimum is obviously 1
+        int checkindex = 0; // while ii keeps track of current envelope, this tracks last envelope with stritly lesser width
+        
+        // These two just allow some speeding up.
+        int max1seen = 0; // largest height seen so far
+        int maxinmap = 0; // greatest length chain seen so far
+        
+        // This also is another speed-up hack. If iterating through maxes, and current envelope ii has same width
+        // as previous envelope ii-1, no need to start iterating through maxes from the beginning since envelope ii
+        // certainly has height greater than or equal to height of envelope ii-1.
+        map<int,int>::iterator lastit; 
+        
+        for(int ii=0; ii<envelopes.size(); ii++){
+            // Get info from all envelopes with width strictly less than that of current envelope ii
+            // into map maxes.
+            while ( envelopes[ii][0]>envelopes[checkindex][0]  ){
+                max1seen = max(max1seen,envelopes[checkindex][1]); // max height seen so far
+                maxinmap = max(maxinmap,maximums[checkindex]); // max chain length seen so far
+                // Insert info into map maxes:
+                pair<map<int,int>::iterator, bool> r = maxes.insert({envelopes[checkindex][1],maximums[checkindex]});
+                if ( !r.second ) maxes[envelopes[checkindex][1]]=max(maxes[envelopes[checkindex][1]],maximums[checkindex]);
+                checkindex++; // check next index
+            }
+            // Now ready to find max chain for current envelope ii
+            int maxinside = 0; // this is the largest chain that can fit inside current envelope
+            if ( envelopes[ii][1]>max1seen ){ // quick check: if current height larger than any height seen before
+                maxinside = maxinmap; // then max chain inside is max chain seen so far
+            } else {
+                map<int,int>::iterator it = maxes.begin(); // start iterating through maxes ... 
+                if ( ii>0 && envelopes[ii][0]==envelopes[ii-1][0]) { // if width same as before then start where ii-1 ended
+                    it = lastit;
+                    maxinside = maximums[ii]-1;
+                }
+                // Here iterate until come upon height not less than envelope ii height. Keep track of max chain size seen.
+                while ( it!=maxes.end() && it->first<envelopes[ii][1] ) { maxinside = max(maxinside,it->second); it++; }
+                lastit = it; // update iterator in case next envelope, ii+1, has same width an so doesn't need to backtrack
+            }
+            maximums[ii] = maxinside+1; // add one for current envelope
+            retval = max(retval,maximums[ii]); // update return value
+        }
+
+        return retval;
+    }
+};
