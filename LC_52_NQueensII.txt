@@ -1,0 +1,41 @@
+class Solution {
+private:
+    bool noConflict(int r1, int c1, int r2, int c2){ // check if two particular queens in conflict
+        if ( r1==r2 ) return false; // can't be in same row
+        if ( c1==c2 ) return false; // can't be in same column
+        if ( abs(c2-c1)==r2-r1 ) return false; // can't be on same diagonal
+        return true;
+    }
+    bool okToPlaceCheck(vector<int>&colInRow, int ii, int row){ // check placing current queen against all already placed queens
+        for (int jj=0; jj<row; jj++) { // for all queens already placed
+            bool noCon = noConflict(jj, colInRow[jj], row, ii);  // do the check
+            if ( noCon==false ) return false; // if one check fails, return false
+        }
+        return true;
+    }
+    int recPlace(vector<int>&colInRow, int row, int n){
+        if ( n==0 ) return 0; 
+        if ( row==n ) return 1; // have successfully placed n queens
+        int retval = 0;         // return value
+        for ( int ii=0; ii<n; ii++){ // for all possible columns in this row
+            bool okToPlace = okToPlaceCheck(colInRow,ii,row); // check if can place queen here
+            if ( okToPlace ) {
+                colInRow[row]=ii; // place queen
+                retval += recPlace(colInRow,row+1,n); // go on to next row
+            }
+        }
+        colInRow[row]=-1; // remove queen before recursing back up one level
+        return retval;
+    }
+public:
+    int totalNQueens(int n) {
+        // runtime = 3ms, which is 86th percentile
+        // memory usage = 6MB, which is 91st percentile
+        // Strategy: recursive backtracking
+        // Imagine going down row by row in the board and checking if can place queen in current row
+        // given all the queens already placed.
+        // colInRow index is row, colInRow value is column of queens already placed
+        vector<int> colInRow(n,-1);
+        return recPlace(colInRow,0,n);
+    }
+};
