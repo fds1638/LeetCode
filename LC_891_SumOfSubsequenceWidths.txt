@@ -1,0 +1,39 @@
+class Solution {
+public:
+    int sumSubseqWidths(vector<int>& nums) {
+        // runtime = 154ms, which is 75th percentile
+        // memory usage = 58MB, which is 21st percentile
+        
+        // Strategy:
+        // If nums is sorted in increasing order, then there is a pattern to how many 
+        // times the width between two successive numbers gets added to the total.
+        // Imagine nums has six elements. Then the widths are w1 through w5, for the five widths
+        // or gaps between successive numbers. I.e. w1 = nums[1]-nums[0], w2 = nums[2]-nums[1], etc.
+        // The total will be:
+        // w1*31*1 + w2*15*3 + w3*7*7 + w4*3*15 + w5*1*31
+        // All the factors are of the form 2^n-1. 
+
+        if (nums.size()<=1 ) return 0; // just get these out of the way
+        int modnum = 1000000007; // modulo number
+        
+        // compute powers of 2 minus one only one time and store them
+        vector<long long> p2mod1097(nums.size()-1,1);
+        p2mod1097[0]=1;
+        for (int kk=1; kk<nums.size()-1; kk++){ 
+            p2mod1097[kk] = ((p2mod1097[kk-1]+1)*2-1)%modnum; 
+        }
+        
+    
+        sort(nums.begin(),nums.end()); // sort in increasing order
+
+        long long retval = 0;
+        for (int ii=1; ii<nums.size(); ii++){
+            long width = (nums[ii]-nums[ii-1])%modnum; // calc width of this interval
+            int lo = ii-1; // get index
+            int hi = nums.size()-1-1-lo; // get index
+            retval += ((width*p2mod1097[lo])%modnum*p2mod1097[hi])%modnum; // calc total
+            retval %= modnum; // calc total
+        }
+        return retval;
+    }
+};
