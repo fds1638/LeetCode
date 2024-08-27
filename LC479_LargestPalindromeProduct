@@ -1,0 +1,88 @@
+class Solution:
+    def getNextPalindrome(self, pbase:int, n:int, pdigs:int, flor:int) -> int:
+        if pbase > flor:
+            newbase = pbase - 1
+        else:
+            newbase = pow(10,n)-1
+            pdigs  -= 1
+        rev_newbase = 0
+        ii = newbase
+        while ii>0:
+            curdig      = ii%10
+            rev_newbase = rev_newbase*10 + curdig
+            ii          = ii//10
+        new_p = 0
+        if pdigs%2==0:
+            new_p = newbase * pow(10,n) + rev_newbase
+        else:
+            rev_newbase = rev_newbase % pow(10,n-1)
+            new_p       = newbase * pow(10,n-1) + rev_newbase
+        return newbase, new_p, pdigs
+
+    def getNextProduct(self,n:int,i:int,h:list,u:set,base:int,digfloor:int,roof:int,cur_prod:tuple) -> list:
+        curp = -cur_prod[0]
+        curx = cur_prod[1]
+        cury = cur_prod[2]
+        # print(curp,curx,cury)
+        xdig = 0
+        ydig = 0
+        while (xdig,ydig) not in [(1,9), (9,1), (3,3), (7,7)]:
+            if curx == roof-1 and cury == roof-1:
+                newx = curx - 2
+                newy = cury
+                # newp = curp - 2 * cury
+            elif cury < roof-1:
+                newx = curx - 2
+                newy = cury + 2
+                # newp = curp - 2 * cury + 2 * newx
+            elif (cury-curx)%4==0:
+                newx   = (curx+cury)//2
+                newy   = (curx+cury)//2
+                newx   = newx - 2
+                # newp   = newx * newy
+            else:
+                newx   = (curx+cury)//2
+                newy   = (curx+cury)//2
+                newx   = newx - 1
+                newy   = newy - 1
+                # newp   = newx * newy
+            xdig = newx%10
+            ydig = newy%10
+            curx = newx
+            cury = newy
+
+        newp = newx * newy
+        return -newp, newx, newy  
+
+    def largestPalindrome(self, n: int) -> int:
+        pbase = pow(10,n)-1
+        cur_p = pbase*pow(10,n)+pbase
+        pdigs = 2*n
+        roof = pow(10,n)
+        flor = pow(10,n-1)
+        base = pow(10,n-1)
+        digfloor  = roof * roof // 10
+        digcount = 2*n
+
+        i = roof - 1
+        u = set()
+        h = [(-i*i,i,i)]
+        u.add((i,i))
+        products = set()
+        products.add(i*i)
+
+        cur_prod = (-i*i,i,i)
+
+        found = False
+        while not found:
+            # print(cur_p, cur_prod)
+            if cur_p==-cur_prod[0]:
+                # print(cur_p, cur_prod)
+                return cur_p%1337
+            elif cur_p>-cur_prod[0]:
+                while cur_p>-cur_prod[0]:
+                    pbase, cur_p, pdigs = self.getNextPalindrome(pbase,n,pdigs,flor)
+            else:
+                cur_prod = self.getNextProduct(n,i,h,u,base,digfloor,roof,cur_prod)
+
+        return -5
